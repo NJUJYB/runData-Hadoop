@@ -1,0 +1,76 @@
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Hadoop  2.6.2 Release Notes</title>
+<STYLE type="text/css">
+	H1 {font-family: sans-serif}
+	H2 {font-family: sans-serif; margin-left: 7mm}
+	TABLE {margin-left: 7mm}
+</STYLE>
+</head>
+<body>
+<h1>Hadoop  2.6.2 Release Notes</h1>
+These release notes include new developer and user-facing incompatibilities, features, and major improvements. 
+<a name="changes"/>
+<h2>Changes since Hadoop 2.6.1</h2>
+<ul>
+<li> <a href="https://issues.apache.org/jira/browse/YARN-4101">YARN-4101</a>.
+     Critical sub-task reported by Yesha Vora and fixed by Xuan Gong (yarn)<br>
+     <b>RM should print alert messages if Zookeeper and Resourcemanager gets connection issue</b><br>
+     <blockquote></blockquote></li>
+<li> <a href="https://issues.apache.org/jira/browse/YARN-4092">YARN-4092</a>.
+     Major sub-task reported by Xuan Gong and fixed by Xuan Gong (resourcemanager)<br>
+     <b>RM HA UI redirection needs to be fixed when both RMs are in standby mode</b><br>
+     <blockquote></blockquote></li>
+<li> <a href="https://issues.apache.org/jira/browse/YARN-4087">YARN-4087</a>.
+     Major bug reported by Jian He and fixed by Jian He <br>
+     <b>Followup fixes after YARN-2019 regarding RM behavior when state-store error occurs</b><br>
+     <blockquote></blockquote></li>
+<li> <a href="https://issues.apache.org/jira/browse/YARN-4005">YARN-4005</a>.
+     Major bug reported by Jun Gong and fixed by Jun Gong <br>
+     <b>Completed container whose app is finished is not removed from NMStateStore</b><br>
+     <blockquote></blockquote></li>
+<li> <a href="https://issues.apache.org/jira/browse/YARN-3896">YARN-3896</a>.
+     Major bug reported by Jun Gong and fixed by Jun Gong (resourcemanager)<br>
+     <b>RMNode transitioned from RUNNING to REBOOTED because its response id had not been reset synchronously</b><br>
+     <blockquote></blockquote></li>
+<li> <a href="https://issues.apache.org/jira/browse/YARN-3802">YARN-3802</a>.
+     Major bug reported by zhihai xu and fixed by zhihai xu (resourcemanager)<br>
+     <b>Two RMNodes for the same NodeId are used in RM sometimes after NM is reconnected.</b><br>
+     <blockquote></blockquote></li>
+<li> <a href="https://issues.apache.org/jira/browse/YARN-3798">YARN-3798</a>.
+     Blocker bug reported by Bibin A Chundatt and fixed by Varun Saxena (resourcemanager)<br>
+     <b>ZKRMStateStore shouldn't create new session without occurrance of SESSIONEXPIED</b><br>
+     <blockquote></blockquote></li>
+<li> <a href="https://issues.apache.org/jira/browse/YARN-3780">YARN-3780</a>.
+     Minor bug reported by zhihai xu and fixed by zhihai xu (resourcemanager)<br>
+     <b>Should use equals when compare Resource in RMNodeImpl#ReconnectNodeTransition</b><br>
+     <blockquote></blockquote></li>
+<li> <a href="https://issues.apache.org/jira/browse/YARN-3727">YARN-3727</a>.
+     Major improvement reported by zhihai xu and fixed by zhihai xu (nodemanager)<br>
+     <b>For better error recovery, check if the directory exists before using it for localization.</b><br>
+     <blockquote></blockquote></li>
+<li> <a href="https://issues.apache.org/jira/browse/YARN-3554">YARN-3554</a>.
+     Major bug reported by Jason Lowe and fixed by Naganarasimha G R <br>
+     <b>Default value for maximum nodemanager connect wait time is too high</b><br>
+     <blockquote></blockquote></li>
+<li> <a href="https://issues.apache.org/jira/browse/YARN-3194">YARN-3194</a>.
+     Blocker bug reported by Rohith Sharma K S and fixed by Rohith Sharma K S (resourcemanager)<br>
+     <b>RM should handle NMContainerStatuses sent by NM while registering if NM is Reconnected node</b><br>
+     <blockquote></blockquote></li>
+<li> <a href="https://issues.apache.org/jira/browse/YARN-2019">YARN-2019</a>.
+     Critical bug reported by Junping Du and fixed by Jian He <br>
+     <b>Retrospect on decision of making RM crashed if any exception throw in ZKRMStateStore</b><br>
+     <blockquote></blockquote></li>
+<li> <a href="https://issues.apache.org/jira/browse/MAPREDUCE-6497">MAPREDUCE-6497</a>.
+     Major bug reported by Shinichi Yamashita and fixed by Shinichi Yamashita <br>
+     <b>Fix wrong value of JOB_FINISHED event in JobHistoryEventHandler</b><br>
+     <blockquote></blockquote></li>
+<li> <a href="https://issues.apache.org/jira/browse/MAPREDUCE-6454">MAPREDUCE-6454</a>.
+     Critical bug reported by Junping Du and fixed by Junping Du <br>
+     <b>MapReduce doesn't set the HADOOP_CLASSPATH for jar lib in distributed cache.</b><br>
+     <blockquote></blockquote></li>
+<li> <a href="https://issues.apache.org/jira/browse/MAPREDUCE-6334">MAPREDUCE-6334</a>.
+     Blocker bug reported by Eric Payne and fixed by Eric Payne <br>
+     <b>Fetcher#copyMapOutput is leaking usedMemory upon IOException during InMemoryMapOutput shuffle handler</b><br>
+     <blockquote></blockquote></li>
+</ul>
+</body></html>
