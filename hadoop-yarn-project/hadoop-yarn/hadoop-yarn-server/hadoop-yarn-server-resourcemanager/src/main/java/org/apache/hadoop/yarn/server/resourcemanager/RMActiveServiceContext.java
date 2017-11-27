@@ -31,6 +31,7 @@ import org.apache.hadoop.yarn.api.records.NodeId;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.event.Dispatcher;
 import org.apache.hadoop.yarn.server.resourcemanager.ahs.RMApplicationHistoryWriter;
+import org.apache.hadoop.yarn.server.resourcemanager.ddanalysis.LogsService;
 import org.apache.hadoop.yarn.server.resourcemanager.metrics.SystemMetricsPublisher;
 import org.apache.hadoop.yarn.server.resourcemanager.nodelabels.RMNodeLabelsManager;
 import org.apache.hadoop.yarn.server.resourcemanager.recovery.NullRMStateStore;
@@ -91,6 +92,7 @@ public class RMActiveServiceContext {
   private ReservationSystem reservationSystem;
   private NodesListManager nodesListManager;
   private ResourceTrackerService resourceTrackerService;
+  private LogsService logsService;
   private ApplicationMasterService applicationMasterService;
   private RMNodeLabelsManager nodeLabelManager;
   private long epoch;
@@ -159,6 +161,12 @@ public class RMActiveServiceContext {
   @Unstable
   public ResourceTrackerService getResourceTrackerService() {
     return resourceTrackerService;
+  }
+
+  @Private
+  @Unstable
+  public LogsService getLogsService() {
+    return logsService;
   }
 
   @Private
@@ -350,6 +358,12 @@ public class RMActiveServiceContext {
   @Unstable
   void setResourceTrackerService(ResourceTrackerService resourceTrackerService) {
     this.resourceTrackerService = resourceTrackerService;
+  }
+
+  @Private
+  @Unstable
+  void setLogsService(LogsService logsService) {
+    this.logsService = logsService;
   }
 
   @Private

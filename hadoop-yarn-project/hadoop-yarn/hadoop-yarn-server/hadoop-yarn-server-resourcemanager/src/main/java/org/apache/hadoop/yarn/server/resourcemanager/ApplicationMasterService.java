@@ -80,6 +80,7 @@ import org.apache.hadoop.yarn.ipc.RPCUtil;
 import org.apache.hadoop.yarn.ipc.YarnRPC;
 import org.apache.hadoop.yarn.security.AMRMTokenIdentifier;
 import org.apache.hadoop.yarn.server.resourcemanager.RMAuditLogger.AuditConstants;
+import org.apache.hadoop.yarn.server.resourcemanager.ddanalysis.event.ResourceAllocationLogsEvent;
 import org.apache.hadoop.yarn.server.resourcemanager.rmapp.RMApp;
 import org.apache.hadoop.yarn.server.resourcemanager.rmapp.attempt.AMLivelinessMonitor;
 import org.apache.hadoop.yarn.server.resourcemanager.rmapp.attempt.RMAppAttempt;
@@ -525,6 +526,16 @@ public class ApplicationMasterService extends AbstractService implements
           throw e;
         }
       }
+
+      String logsData = "";
+      int containerCnt = 0;
+      for (ResourceRequest req : ask) {
+        logsData += req.getPriority() + " " + req.getNumContainers() + " " + req.getResourceName() + " " +
+                req.getRelaxLocality() + " " + req.getCapability() + ";";
+        containerCnt += req.getNumContainers();
+      }
+      if(containerCnt != 0) rmContext.getLogsService().handle(new ResourceAllocationLogsEvent(
+              System.currentTimeMillis() + " " + logsData));
 
       // Send new requests to appAttempt.
       Allocation allocation =

@@ -21,6 +21,7 @@ package org.apache.hadoop.yarn.server.resourcemanager;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentMap;
 
+import org.apache.commons.logging.Log;
 import org.apache.hadoop.classification.InterfaceAudience.Private;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.classification.InterfaceStability.Unstable;
@@ -32,6 +33,7 @@ import org.apache.hadoop.yarn.api.records.NodeId;
 import org.apache.hadoop.yarn.conf.ConfigurationProvider;
 import org.apache.hadoop.yarn.event.Dispatcher;
 import org.apache.hadoop.yarn.server.resourcemanager.ahs.RMApplicationHistoryWriter;
+import org.apache.hadoop.yarn.server.resourcemanager.ddanalysis.LogsService;
 import org.apache.hadoop.yarn.server.resourcemanager.metrics.SystemMetricsPublisher;
 import org.apache.hadoop.yarn.server.resourcemanager.nodelabels.RMNodeLabelsManager;
 import org.apache.hadoop.yarn.server.resourcemanager.recovery.RMStateStore;
@@ -232,6 +234,9 @@ public class RMContextImpl implements RMContext {
     return activeServiceContext.getResourceTrackerService();
   }
 
+  @Override
+  public LogsService getLogsService() { return activeServiceContext.getLogsService(); }
+
   void setHAEnabled(boolean isHAEnabled) {
     this.isHAEnabled = isHAEnabled;
   }
@@ -324,6 +329,10 @@ public class RMContextImpl implements RMContext {
 
   void setResourceTrackerService(ResourceTrackerService resourceTrackerService) {
     activeServiceContext.setResourceTrackerService(resourceTrackerService);
+  }
+
+  void setLogsService(LogsService logsService) {
+    activeServiceContext.setLogsService(logsService);
   }
 
   @Override

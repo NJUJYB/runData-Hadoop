@@ -55,6 +55,7 @@ import org.apache.hadoop.yarn.api.records.ResourceRequest;
 import org.apache.hadoop.yarn.factories.RecordFactory;
 import org.apache.hadoop.yarn.factory.providers.RecordFactoryProvider;
 import org.apache.hadoop.yarn.nodelabels.CommonNodeLabelsManager;
+import org.apache.hadoop.yarn.server.resourcemanager.ddanalysis.event.ResourceAllocationLogsEvent;
 import org.apache.hadoop.yarn.server.resourcemanager.nodelabels.RMNodeLabelsManager;
 import org.apache.hadoop.yarn.server.resourcemanager.rmcontainer.RMContainer;
 import org.apache.hadoop.yarn.server.resourcemanager.rmcontainer.RMContainerEventType;
@@ -839,6 +840,15 @@ public class LeafQueue extends AbstractCSQueue {
             // Note: Update headroom to account for current allocation too...
             allocateResource(clusterResource, application, assigned,
                 node.getLabels());
+
+            String logsData;
+            if(assignment.getSkipped()) logsData = "getSkipped!";
+            else logsData = application.getUser() + " " +
+                    priority.toString() + " " + assignment.getType() + " " + assigned + " " +
+                    node.getNodeID() + " " + node.getNodeName() + " " + node.getRackName();
+            scheduler.getRMContext().getLogsService()
+                    .handle(new ResourceAllocationLogsEvent(
+                            System.currentTimeMillis() + " " + logsData));
             
             // Don't reset scheduling opportunities for non-local assignments
             // otherwise the app will be delayed for each non-local assignment.

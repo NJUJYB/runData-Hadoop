@@ -64,6 +64,7 @@ import org.apache.hadoop.yarn.exceptions.YarnRuntimeException;
 import org.apache.hadoop.yarn.server.resourcemanager.ahs.RMApplicationHistoryWriter;
 import org.apache.hadoop.yarn.server.resourcemanager.amlauncher.AMLauncherEventType;
 import org.apache.hadoop.yarn.server.resourcemanager.amlauncher.ApplicationMasterLauncher;
+import org.apache.hadoop.yarn.server.resourcemanager.ddanalysis.LogsService;
 import org.apache.hadoop.yarn.server.resourcemanager.metrics.SystemMetricsPublisher;
 import org.apache.hadoop.yarn.server.resourcemanager.monitor.SchedulingEditPolicy;
 import org.apache.hadoop.yarn.server.resourcemanager.monitor.SchedulingMonitor;
@@ -162,6 +163,7 @@ public class ResourceManager extends CompositeService implements Recoverable {
   private WebApp webApp;
   private AppReportFetcher fetcher = null;
   protected ResourceTrackerService resourceTracker;
+  protected LogsService logsService;
 
   @VisibleForTesting
   protected String webAppAddress;
@@ -514,6 +516,10 @@ public class ResourceManager extends CompositeService implements Recoverable {
       resourceTracker = createResourceTrackerService();
       addService(resourceTracker);
       rmContext.setResourceTrackerService(resourceTracker);
+
+      logsService = createLogsService();
+      addService(logsService);
+      rmContext.setLogsService(logsService);
 
       DefaultMetricsSystem.initialize("ResourceManager");
       JvmMetrics.initSingleton("ResourceManager", null);
@@ -1125,6 +1131,10 @@ public class ResourceManager extends CompositeService implements Recoverable {
         this.nmLivelinessMonitor,
         this.rmContext.getContainerTokenSecretManager(),
         this.rmContext.getNMTokenSecretManager());
+  }
+
+  protected LogsService createLogsService() {
+    return new LogsService(this.rmContext);
   }
 
   protected ClientRMService createClientRMService() {

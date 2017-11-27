@@ -44,7 +44,8 @@ public class NavBlock extends HtmlBlock {
     }
     subAppsList._()._();
     mainList.
-          li().a(url("scheduler"), "Scheduler")._()._().
+          li().a(url("scheduler"), "Scheduler")._().
+          li().a(url("dda"), "Data Analysis")._()._().
         h3("Tools").
         ul().
           li().a("/conf", "Configuration")._().
