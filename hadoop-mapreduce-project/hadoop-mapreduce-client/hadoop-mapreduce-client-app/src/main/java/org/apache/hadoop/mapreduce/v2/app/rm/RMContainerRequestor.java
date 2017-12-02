@@ -336,18 +336,18 @@ public abstract class RMContainerRequestor extends RMCommunicator {
     return availableResources;
   }
   
-  protected void addContainerReq(ContainerRequest req) {
+  protected void addContainerReq(ContainerRequest req, String append) {
     // Create resource requests
     for (String host : req.hosts) {
       // Data-local
       if (!isNodeBlacklisted(host)) {
-        addResourceRequest(req.priority, host, req.capability);
+        addResourceRequest(req.priority, host + append, req.capability);
       }      
     }
 
     // Nothing Rack-local for now
     for (String rack : req.racks) {
-      addResourceRequest(req.priority, rack, req.capability);
+      addResourceRequest(req.priority, rack + append, req.capability);
     }
 
     // Off-switch

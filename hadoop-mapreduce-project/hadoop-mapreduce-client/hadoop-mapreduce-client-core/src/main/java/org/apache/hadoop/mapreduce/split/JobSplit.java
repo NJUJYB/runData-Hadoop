@@ -172,10 +172,6 @@ public class JobSplit {
     public TaskSplitIndex getSplitIndex() {
       return splitIndex;
     }
-    
-    public String getSplitLocation() {
-      return splitIndex.getSplitLocation();
-    }
     public long getInputDataLength() {
       return inputDataLength;
     }
@@ -194,6 +190,8 @@ public class JobSplit {
   public static class TaskSplitIndex {
     private String splitLocation;
     private long startOffset;
+    private String splitPath = "";
+
     public TaskSplitIndex(){
       this("", 0);
     }
@@ -201,6 +199,12 @@ public class JobSplit {
       this.splitLocation = splitLocation;
       this.startOffset = startOffset;
     }
+
+    public TaskSplitIndex(String splitLocation, long startOffset, String splitPath) {
+      this(splitLocation, startOffset);
+      this.splitPath = splitPath;
+    }
+
     public long getStartOffset() {
       return startOffset;
     }
@@ -215,5 +219,6 @@ public class JobSplit {
       Text.writeString(out, splitLocation);
       WritableUtils.writeVLong(out, startOffset);
     }
+    public String getSplitPath() { return splitPath; }
   }
 }

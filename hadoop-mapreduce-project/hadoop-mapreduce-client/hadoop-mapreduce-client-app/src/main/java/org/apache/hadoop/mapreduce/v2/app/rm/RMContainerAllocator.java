@@ -19,18 +19,8 @@
 package org.apache.hadoop.mapreduce.v2.app.rm;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -45,10 +35,12 @@ import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.jobhistory.JobHistoryEvent;
 import org.apache.hadoop.mapreduce.jobhistory.NormalizedResourceEvent;
 import org.apache.hadoop.mapreduce.v2.api.records.JobId;
+import org.apache.hadoop.mapreduce.v2.api.records.JobState;
 import org.apache.hadoop.mapreduce.v2.api.records.TaskAttemptId;
 import org.apache.hadoop.mapreduce.v2.api.records.TaskType;
 import org.apache.hadoop.mapreduce.v2.app.AppContext;
 import org.apache.hadoop.mapreduce.v2.app.client.ClientService;
+import org.apache.hadoop.mapreduce.v2.app.job.Job;
 import org.apache.hadoop.mapreduce.v2.app.job.event.JobCounterUpdateEvent;
 import org.apache.hadoop.mapreduce.v2.app.job.event.JobDiagnosticsUpdateEvent;
 import org.apache.hadoop.mapreduce.v2.app.job.event.JobEvent;
@@ -914,13 +906,13 @@ public class RMContainerAllocator extends RMContainerRequestor
        request = new ContainerRequest(event, PRIORITY_MAP);
       }
       maps.put(event.getAttemptID(), request);
-      addContainerReq(request);
+      addContainerReq(request, event.getAppendSplitPath());
     }
     
     
     void addReduce(ContainerRequest req) {
       reduces.put(req.attemptID, req);
-      addContainerReq(req);
+      addContainerReq(req, "");
     }
     
     // this method will change the list of allocatedContainers.
@@ -1006,7 +998,7 @@ public class RMContainerAllocator extends RMContainerRequestor
             else {
               reduces.put(newReq.attemptID, newReq);
             }
-            addContainerReq(newReq);
+            addContainerReq(newReq, "");
           }
           else {
             LOG.info("Could not map allocated container to a valid request."

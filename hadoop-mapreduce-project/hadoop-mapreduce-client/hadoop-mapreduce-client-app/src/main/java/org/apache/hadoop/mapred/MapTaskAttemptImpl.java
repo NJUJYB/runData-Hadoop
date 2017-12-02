@@ -61,4 +61,5 @@ public class MapTaskAttemptImpl extends TaskAttemptImpl {
     return mapTask;
   }
 
+  public TaskSplitMetaInfo getSplitInfo() { return splitInfo; }
 }

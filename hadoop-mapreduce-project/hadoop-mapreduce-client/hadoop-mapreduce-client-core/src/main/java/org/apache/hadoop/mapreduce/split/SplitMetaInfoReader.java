@@ -18,8 +18,11 @@
 
 package org.apache.hadoop.mapreduce.split;
 
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
@@ -28,6 +31,7 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapreduce.JobID;
 import org.apache.hadoop.mapreduce.JobSubmissionFiles;
@@ -67,18 +71,42 @@ public class SplitMetaInfoReader {
     int numSplits = WritableUtils.readVInt(in); //TODO: check for insane values
     JobSplit.TaskSplitMetaInfo[] allSplitMetaInfo = 
       new JobSplit.TaskSplitMetaInfo[numSplits];
+
+    Map<String, String> splitPathMap = new HashMap<String, String>(0);
+    FSDataInputStream splitFile = fs.open(JobSubmissionFiles.getJobSplitFile(jobSubmitDir));
+    splitFile.read(new byte["SPL".getBytes("UTF-8").length]);
+    splitFile.readInt();
+    for(int i = 0; i < numSplits; ++i) {
+      try {
+        long offset = splitFile.getPos();
+        int classNameLen = WritableUtils.readVInt(splitFile);
+        splitFile.read(new byte[classNameLen]);
+        int pathLen = WritableUtils.readVInt(splitFile);
+        byte[] pathNameByte = new byte[pathLen];
+        splitFile.read(pathNameByte);
+        String pathName = new String(pathNameByte);
+        long start = splitFile.readLong();
+        long length = splitFile.readLong();
+        splitPathMap.put("" + offset, pathName);
+      } catch (EOFException e) {}
+    }
+    splitFile.close();
+
+
     for (int i = 0; i < numSplits; i++) {
       JobSplit.SplitMetaInfo splitMetaInfo = new JobSplit.SplitMetaInfo();
       splitMetaInfo.readFields(in);
+      String splitPath = splitPathMap.get("" + splitMetaInfo.getStartOffset());
       JobSplit.TaskSplitIndex splitIndex = new JobSplit.TaskSplitIndex(
           jobSplitFile, 
-          splitMetaInfo.getStartOffset());
+          splitMetaInfo.getStartOffset(),
+          splitPath);
       allSplitMetaInfo[i] = new JobSplit.TaskSplitMetaInfo(splitIndex, 
           splitMetaInfo.getLocations(), 
           splitMetaInfo.getInputDataLength());
     }
     in.close();
+
     return allSplitMetaInfo;
   }
-
 }

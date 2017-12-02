@@ -22,11 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -427,6 +423,25 @@ public class ApplicationMasterService extends AbstractService implements
 
     this.amLivelinessMonitor.receivedPing(appAttemptId);
 
+    Map<String, String> splitPathMap = new HashMap<String, String>(0);
+    for(ResourceRequest req : request.getAskList()) {
+      if(req.getResourceName().indexOf("&") != -1) {
+        String[] splits = req.getResourceName().split("&");
+        if(splitPathMap.get(splits[1]) == null) splitPathMap.put(splits[1], splits[0]);
+        else {
+          if(splits[0].indexOf("/") == -1) splitPathMap.put(splits[1], splitPathMap.get(splits[1]) + " " + splits[0]);
+          else splitPathMap.put(splits[1], splits[0] + " " + splitPathMap.get(splits[1]));
+        }
+        req.setResourceName(splits[0]);
+      }
+    }
+    String logsData_0 = "";
+    for(String str : splitPathMap.keySet()){
+      logsData_0 += str + " " + splitPathMap.get(str) + "; ";
+    }
+    if(!logsData_0.equals("")) rmContext.getLogsService().handle(new ResourceAllocationLogsEvent(
+            System.currentTimeMillis() + " " + applicationId + ": " + logsData_0));
+
     /* check if its in cache */
     AllocateResponseLock lock = responseMap.get(appAttemptId);
     if (lock == null) {
@@ -527,15 +542,15 @@ public class ApplicationMasterService extends AbstractService implements
         }
       }
 
-      String logsData = "";
+      String logsData_1 = "" + applicationId + ": ";
       int containerCnt = 0;
       for (ResourceRequest req : ask) {
-        logsData += req.getPriority() + " " + req.getNumContainers() + " " + req.getResourceName() + " " +
+        logsData_1 += req.getPriority() + " " + req.getNumContainers() + " " + req.getResourceName() + " " +
                 req.getRelaxLocality() + " " + req.getCapability() + ";";
         containerCnt += req.getNumContainers();
       }
       if(containerCnt != 0) rmContext.getLogsService().handle(new ResourceAllocationLogsEvent(
-              System.currentTimeMillis() + " " + logsData));
+              System.currentTimeMillis() + " " + logsData_1));
 
       // Send new requests to appAttempt.
       Allocation allocation =

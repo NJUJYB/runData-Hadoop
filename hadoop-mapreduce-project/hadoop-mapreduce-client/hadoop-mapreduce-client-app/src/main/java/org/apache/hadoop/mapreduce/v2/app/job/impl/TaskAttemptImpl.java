@@ -45,14 +45,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataOutputBuffer;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobContext;
-import org.apache.hadoop.mapred.MapReduceChildJVM;
-import org.apache.hadoop.mapred.ShuffleHandler;
-import org.apache.hadoop.mapred.Task;
-import org.apache.hadoop.mapred.TaskAttemptContextImpl;
-import org.apache.hadoop.mapred.WrappedJvmID;
-import org.apache.hadoop.mapred.WrappedProgressSplitsBlock;
+import org.apache.hadoop.mapred.*;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.JobCounter;
@@ -1465,12 +1458,17 @@ public abstract class TaskAttemptImpl implements
                 taskAttempt.attemptId, 
                 taskAttempt.resourceCapability));
       } else {
+        String splitPath = "";
+        if(taskAttempt instanceof MapTaskAttemptImpl) {
+          MapTaskAttemptImpl map = (MapTaskAttemptImpl) taskAttempt;
+          splitPath += "&" + map.getSplitInfo().getSplitIndex().getSplitPath();
+        }
         taskAttempt.eventHandler.handle(new ContainerRequestEvent(
             taskAttempt.attemptId, taskAttempt.resourceCapability,
             taskAttempt.dataLocalHosts.toArray(
                 new String[taskAttempt.dataLocalHosts.size()]),
             taskAttempt.dataLocalRacks.toArray(
-                new String[taskAttempt.dataLocalRacks.size()])));
+                new String[taskAttempt.dataLocalRacks.size()]), splitPath));
       }
     }
   }

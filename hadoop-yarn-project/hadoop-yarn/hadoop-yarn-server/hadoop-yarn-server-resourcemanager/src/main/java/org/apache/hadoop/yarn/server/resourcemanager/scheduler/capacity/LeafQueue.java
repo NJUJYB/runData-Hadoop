@@ -842,8 +842,8 @@ public class LeafQueue extends AbstractCSQueue {
                 node.getLabels());
 
             String logsData;
-            if(assignment.getSkipped()) logsData = "getSkipped!";
-            else logsData = application.getUser() + " " +
+            if(assignment.getSkipped()) logsData = application.getApplicationId() + ": getSkipped!";
+            else logsData = application.getApplicationId() + ": " + application.getUser() + " " +
                     priority.toString() + " " + assignment.getType() + " " + assigned + " " +
                     node.getNodeID() + " " + node.getNodeName() + " " + node.getRackName();
             scheduler.getRMContext().getLogsService()

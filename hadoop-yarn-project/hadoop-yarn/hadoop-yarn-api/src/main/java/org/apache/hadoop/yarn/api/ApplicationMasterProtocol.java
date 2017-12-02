@@ -167,6 +167,6 @@ public interface ApplicationMasterProtocol {
   @Public
   @Stable
   @AtMostOnce
-  public AllocateResponse allocate(AllocateRequest request) 
+  public AllocateResponse allocate(AllocateRequest request)
   throws YarnException, IOException;
 }

@@ -28,6 +28,14 @@ public class ContainerRequestEvent extends ContainerAllocatorEvent {
   private final String[] hosts;
   private final String[] racks;
   private boolean earlierAttemptFailed = false;
+  private String appendSplitPath = "";
+
+  public ContainerRequestEvent(TaskAttemptId attemptID,
+                               Resource capability,
+                               String[] hosts, String[] racks, String splitPath) {
+    this(attemptID, capability, hosts, racks);
+    this.appendSplitPath = splitPath;
+  }
 
   public ContainerRequestEvent(TaskAttemptId attemptID, 
       Resource capability,
@@ -42,7 +50,7 @@ public class ContainerRequestEvent extends ContainerAllocatorEvent {
     this(attemptID, capability, new String[0], new String[0]);
     this.earlierAttemptFailed = true;
   }
-  
+
   public static ContainerRequestEvent createContainerRequestEventForFailedContainer(
       TaskAttemptId attemptID, 
       Resource capability) {
@@ -65,4 +73,6 @@ public class ContainerRequestEvent extends ContainerAllocatorEvent {
   public boolean getEarlierAttemptFailed() {
     return earlierAttemptFailed;
   }
+
+  public String getAppendSplitPath() { return appendSplitPath; }
 }
