@@ -17,7 +17,7 @@ import java.util.ArrayList;
 public class LogsService extends AbstractService implements DataDrivenLogsService{
     private final RMContext rmContext;
     private static final Log LOG = LogFactory.getLog(LogsService.class);
-    private File file = new File("/home/master/Desktop/hadoop/hadoop-2.6.2/logs/logs.txt");
+    private File file = new File("/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/logs.txt");
 
     public LogsService(RMContext rmContext) {
         super(LogsService.class.getName());
