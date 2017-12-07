@@ -236,6 +236,11 @@
       <artifactId>annotations-java5</artifactId>
       <version>15.0</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-hdfs</artifactId>
+      <version>2.6.2</version>
+    </dependency>
   </dependencies>
 
   <build>

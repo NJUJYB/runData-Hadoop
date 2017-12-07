@@ -3,6 +3,7 @@ cd ~
 
 cp -r ~/Desktop/code/dda-master/hadoop-dist/target/hadoop-2.6.2 ~/Desktop/hadoop/
 cp ~/Desktop/code/dda-master/settings/config/dis/* ~/Desktop/hadoop/hadoop-2.6.2/etc/hadoop/
+#cp ~/Desktop/code/dda-master/settings/config/debug/* ~/Desktop/hadoop/hadoop-2.6.2/sbin/
 
 cd ~/Desktop/hadoop/hadoop-2.6.2/
 mkdir tmp
@@ -18,7 +19,7 @@ cd ~/Desktop/hadoop/hadoop-2.6.2/
 ./sbin/start-all.sh
 ./sbin/hadoop-daemon.sh start datanode
 bin/hdfs dfs -mkdir /input
-bin/hdfs dfs -put ~/Desktop/jin.txt.segmented /input
+bin/hdfs dfs -put ~/Desktop/jin1.txt.segmented /input
 sleep 3
 echo HDFS-SETTING-DONE
 #bin/hdfs dfs -put ~/Desktop/jin2.txt.segmented /input
@@ -29,10 +30,9 @@ cd ~/Desktop/hadoop/hadoop-2.6.2/
 hadoop jar ~/Desktop/InvertedIndex.jar /input/. /out1
 
 sleep 10
-
-hadoop jar ~/Desktop/InvertedIndex.jar /input/. /out2
 exit
 remotessh
+#hadoop jar ~/Desktop/InvertedIndex.jar /input/. /out2
 cd ~
 #echo "jyb" | sudo -S wondershaper clear eth0
 

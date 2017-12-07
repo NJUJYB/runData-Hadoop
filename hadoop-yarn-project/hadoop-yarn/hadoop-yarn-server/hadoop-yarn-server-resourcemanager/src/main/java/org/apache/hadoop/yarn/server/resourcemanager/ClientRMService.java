@@ -295,7 +295,7 @@ public class ClientRMService extends AbstractService implements
     response.setApplicationId(getNewApplicationId());
     // Pick up min/max resource from scheduler...
     response.setMaximumResourceCapability(scheduler
-        .getMaximumResourceCapability());       
+        .getMaximumResourceCapability());
     
     return response;
   }

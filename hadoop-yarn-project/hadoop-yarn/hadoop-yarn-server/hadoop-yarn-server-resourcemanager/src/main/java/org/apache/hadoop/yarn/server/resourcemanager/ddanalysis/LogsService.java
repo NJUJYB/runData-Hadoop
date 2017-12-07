@@ -10,6 +10,9 @@ import org.apache.hadoop.yarn.server.resourcemanager.ddanalysis.event.ResourceAl
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by master on 17-11-26.
@@ -19,13 +22,53 @@ public class LogsService extends AbstractService implements DataDrivenLogsServic
     private static final Log LOG = LogFactory.getLog(LogsService.class);
     private File file = new File("/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/logs.txt");
 
+    private Thread eventHandlingThread;
+    private final AtomicBoolean stopped;
+    protected BlockingQueue<LogsEvent> eventQueue = new LinkedBlockingQueue<LogsEvent>();
+
     public LogsService(RMContext rmContext) {
         super(LogsService.class.getName());
         this.rmContext = rmContext;
+        this.stopped = new AtomicBoolean(false);
+
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
-    public void handle(LogsEvent event) {
+    protected void serviceStart() throws Exception {
+        this.eventHandlingThread = new Thread() {
+            @SuppressWarnings("unchecked")
+            @Override
+            public void run() {
+                LogsEvent event;
+                while (!stopped.get() && !Thread.currentThread().isInterrupted()) {
+                    try {
+                        event = LogsService.this.eventQueue.take();
+                    } catch (InterruptedException e) {
+                        if (!stopped.get()) {
+                            LOG.error("Returning, interrupted : " + e);
+                        } return;
+                    }
+                    try {
+                        handleEvent(event);
+                    } catch (Throwable t) {
+                        return;
+                    }
+                }
+            }
+        };
+        this.eventHandlingThread.start();
+        super.serviceStart();
+    }
+
+    protected synchronized void handleEvent(LogsEvent event) {
         synchronized (file) {
             switch (event.getType()) {
                 case RESOURCE_ADDED: {
@@ -41,6 +84,14 @@ public class LogsService extends AbstractService implements DataDrivenLogsServic
                     }
                 } break;
             }
+        }
+    }
+
+    @Override
+    public void handle(LogsEvent event) {
+        try {
+            eventQueue.put(event);
+        } catch (InterruptedException e) {
         }
     }
 
@@ -69,19 +120,6 @@ public class LogsService extends AbstractService implements DataDrivenLogsServic
     @Override
     protected void serviceInit(Configuration conf) throws Exception {
         super.serviceInit(conf);
-    }
-
-    @Override
-    protected void serviceStart() throws Exception {
-        super.serviceStart();
-        if (!file.exists()) {
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
     }
 
     @Override

@@ -523,8 +523,11 @@ public class ResourceManager extends CompositeService implements Recoverable {
       addService(logsService);
       rmContext.setLogsService(logsService);
 
-      analysisService = createAnalysisService();
-      addService(analysisService);
+      if(conf.getBoolean(YarnConfiguration.RM_ANALYSIS_ENABLE,
+              YarnConfiguration.DEFAULT_RM_ANALYSIS_ENABLE)) {
+        analysisService = createAnalysisService();
+        addService(analysisService);
+      } else analysisService = null;
       rmContext.setAnalysisService(analysisService);
 
       DefaultMetricsSystem.initialize("ResourceManager");

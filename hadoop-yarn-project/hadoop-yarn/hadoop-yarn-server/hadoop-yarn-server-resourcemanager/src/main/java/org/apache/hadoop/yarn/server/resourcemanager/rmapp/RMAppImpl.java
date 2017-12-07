@@ -906,8 +906,6 @@ public class RMAppImpl implements RMApp, Recoverable {
       RMAppTransition {
     @Override
     public void transition(RMAppImpl app, RMAppEvent event) {
-      app.rmContext.getLogsService().handle(new ResourceAllocationLogsEvent(
-              System.currentTimeMillis() + " " + app.applicationId.toString() + ": Start!"));
       app.handler.handle(new AppAddedSchedulerEvent(app.applicationId,
         app.submissionContext.getQueue(), app.user,
         app.submissionContext.getReservationID()));
@@ -977,6 +975,8 @@ public class RMAppImpl implements RMApp, Recoverable {
       // non-blocking call so make sure that RM has stored the information
       // needed to restart the AM after RM restart without further client
       // communication
+      app.rmContext.getLogsService().handle(new ResourceAllocationLogsEvent(
+              System.currentTimeMillis() + " " + app.applicationId.toString() + ": Start!"));
       LOG.info("Storing application with id " + app.applicationId);
       app.rmContext.getStateStore().storeNewApplication(app);
     }
@@ -1071,7 +1071,8 @@ public class RMAppImpl implements RMApp, Recoverable {
           (RMAppFinishedAttemptEvent)event;
       app.rmContext.getLogsService().handle(new ResourceAllocationLogsEvent(
               System.currentTimeMillis() + " " + app.applicationId.toString() + ": Finished!"));
-      app.rmContext.getAnalysisService().handle(new AnalysisRequestEvent(app.applicationId.toString()));
+      if(app.rmContext.getAnalysisService() != null)
+        app.rmContext.getAnalysisService().handle(new AnalysisRequestEvent(app.applicationId.toString()));
       app.diagnostics.append(finishedEvent.getDiagnostics());
       super.transition(app, event);
     };

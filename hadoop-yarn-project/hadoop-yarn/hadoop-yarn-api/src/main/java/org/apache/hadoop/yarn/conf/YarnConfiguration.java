@@ -124,6 +124,9 @@ public class YarnConfiguration extends Configuration {
   ////////////////////////////////
   public static final String RM_PREFIX = "yarn.resourcemanager.";
 
+  public static final String RM_ANALYSIS_ENABLE = RM_PREFIX + "analysisEnable";
+  public static final boolean DEFAULT_RM_ANALYSIS_ENABLE = true;
+
   public static final String RM_CLUSTER_ID = RM_PREFIX + "cluster-id";
 
   public static final String RM_HOSTNAME = RM_PREFIX + "hostname";
