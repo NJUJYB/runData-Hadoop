@@ -33,6 +33,7 @@ import org.apache.hadoop.yarn.api.records.NodeId;
 import org.apache.hadoop.yarn.conf.ConfigurationProvider;
 import org.apache.hadoop.yarn.event.Dispatcher;
 import org.apache.hadoop.yarn.server.resourcemanager.ahs.RMApplicationHistoryWriter;
+import org.apache.hadoop.yarn.server.resourcemanager.ddanalysis.AnalysisService;
 import org.apache.hadoop.yarn.server.resourcemanager.ddanalysis.LogsService;
 import org.apache.hadoop.yarn.server.resourcemanager.metrics.SystemMetricsPublisher;
 import org.apache.hadoop.yarn.server.resourcemanager.nodelabels.RMNodeLabelsManager;
@@ -237,6 +238,9 @@ public class RMContextImpl implements RMContext {
   @Override
   public LogsService getLogsService() { return activeServiceContext.getLogsService(); }
 
+  @Override
+  public AnalysisService getAnalysisService() { return activeServiceContext.getAnalysisService(); }
+
   void setHAEnabled(boolean isHAEnabled) {
     this.isHAEnabled = isHAEnabled;
   }
@@ -333,6 +337,10 @@ public class RMContextImpl implements RMContext {
 
   void setLogsService(LogsService logsService) {
     activeServiceContext.setLogsService(logsService);
+  }
+
+  void setAnalysisService(AnalysisService analysisService) {
+    activeServiceContext.setAnalysisService(analysisService);
   }
 
   @Override

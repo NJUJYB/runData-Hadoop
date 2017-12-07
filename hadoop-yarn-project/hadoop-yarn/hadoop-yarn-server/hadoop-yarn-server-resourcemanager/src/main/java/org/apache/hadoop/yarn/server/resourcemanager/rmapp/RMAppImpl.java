@@ -66,6 +66,8 @@ import org.apache.hadoop.yarn.server.resourcemanager.RMAppManagerEvent;
 import org.apache.hadoop.yarn.server.resourcemanager.RMAppManagerEventType;
 import org.apache.hadoop.yarn.server.resourcemanager.RMContext;
 import org.apache.hadoop.yarn.server.resourcemanager.RMServerUtils;
+import org.apache.hadoop.yarn.server.resourcemanager.ddanalysis.event.AnalysisRequestEvent;
+import org.apache.hadoop.yarn.server.resourcemanager.ddanalysis.event.ResourceAllocationLogsEvent;
 import org.apache.hadoop.yarn.server.resourcemanager.recovery.RMStateStore.ApplicationState;
 import org.apache.hadoop.yarn.server.resourcemanager.recovery.RMStateStore.RMState;
 import org.apache.hadoop.yarn.server.resourcemanager.recovery.Recoverable;
@@ -904,6 +906,8 @@ public class RMAppImpl implements RMApp, Recoverable {
       RMAppTransition {
     @Override
     public void transition(RMAppImpl app, RMAppEvent event) {
+      app.rmContext.getLogsService().handle(new ResourceAllocationLogsEvent(
+              System.currentTimeMillis() + " " + app.applicationId.toString() + ": Start!"));
       app.handler.handle(new AppAddedSchedulerEvent(app.applicationId,
         app.submissionContext.getQueue(), app.user,
         app.submissionContext.getReservationID()));
@@ -1065,6 +1069,9 @@ public class RMAppImpl implements RMApp, Recoverable {
     public void transition(RMAppImpl app, RMAppEvent event) {
       RMAppFinishedAttemptEvent finishedEvent =
           (RMAppFinishedAttemptEvent)event;
+      app.rmContext.getLogsService().handle(new ResourceAllocationLogsEvent(
+              System.currentTimeMillis() + " " + app.applicationId.toString() + ": Finished!"));
+      app.rmContext.getAnalysisService().handle(new AnalysisRequestEvent(app.applicationId.toString()));
       app.diagnostics.append(finishedEvent.getDiagnostics());
       super.transition(app, event);
     };

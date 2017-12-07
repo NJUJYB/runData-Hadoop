@@ -31,6 +31,7 @@ import org.apache.hadoop.yarn.api.records.NodeId;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.event.Dispatcher;
 import org.apache.hadoop.yarn.server.resourcemanager.ahs.RMApplicationHistoryWriter;
+import org.apache.hadoop.yarn.server.resourcemanager.ddanalysis.AnalysisService;
 import org.apache.hadoop.yarn.server.resourcemanager.ddanalysis.LogsService;
 import org.apache.hadoop.yarn.server.resourcemanager.metrics.SystemMetricsPublisher;
 import org.apache.hadoop.yarn.server.resourcemanager.nodelabels.RMNodeLabelsManager;
@@ -93,6 +94,7 @@ public class RMActiveServiceContext {
   private NodesListManager nodesListManager;
   private ResourceTrackerService resourceTrackerService;
   private LogsService logsService;
+  private AnalysisService analysisService;
   private ApplicationMasterService applicationMasterService;
   private RMNodeLabelsManager nodeLabelManager;
   private long epoch;
@@ -167,6 +169,12 @@ public class RMActiveServiceContext {
   @Unstable
   public LogsService getLogsService() {
     return logsService;
+  }
+
+  @Private
+  @Unstable
+  public AnalysisService getAnalysisService() {
+    return analysisService;
   }
 
   @Private
@@ -364,6 +372,12 @@ public class RMActiveServiceContext {
   @Unstable
   void setLogsService(LogsService logsService) {
     this.logsService = logsService;
+  }
+
+  @Private
+  @Unstable
+  void setAnalysisService(AnalysisService analysisService) {
+    this.analysisService = analysisService;
   }
 
   @Private

@@ -64,6 +64,7 @@ import org.apache.hadoop.yarn.exceptions.YarnRuntimeException;
 import org.apache.hadoop.yarn.server.resourcemanager.ahs.RMApplicationHistoryWriter;
 import org.apache.hadoop.yarn.server.resourcemanager.amlauncher.AMLauncherEventType;
 import org.apache.hadoop.yarn.server.resourcemanager.amlauncher.ApplicationMasterLauncher;
+import org.apache.hadoop.yarn.server.resourcemanager.ddanalysis.AnalysisService;
 import org.apache.hadoop.yarn.server.resourcemanager.ddanalysis.LogsService;
 import org.apache.hadoop.yarn.server.resourcemanager.metrics.SystemMetricsPublisher;
 import org.apache.hadoop.yarn.server.resourcemanager.monitor.SchedulingEditPolicy;
@@ -164,6 +165,7 @@ public class ResourceManager extends CompositeService implements Recoverable {
   private AppReportFetcher fetcher = null;
   protected ResourceTrackerService resourceTracker;
   protected LogsService logsService;
+  protected AnalysisService analysisService;
 
   @VisibleForTesting
   protected String webAppAddress;
@@ -520,6 +522,10 @@ public class ResourceManager extends CompositeService implements Recoverable {
       logsService = createLogsService();
       addService(logsService);
       rmContext.setLogsService(logsService);
+
+      analysisService = createAnalysisService();
+      addService(analysisService);
+      rmContext.setAnalysisService(analysisService);
 
       DefaultMetricsSystem.initialize("ResourceManager");
       JvmMetrics.initSingleton("ResourceManager", null);
@@ -1133,9 +1139,9 @@ public class ResourceManager extends CompositeService implements Recoverable {
         this.rmContext.getNMTokenSecretManager());
   }
 
-  protected LogsService createLogsService() {
-    return new LogsService(this.rmContext);
-  }
+  protected LogsService createLogsService() { return new LogsService(this.rmContext); }
+
+  protected AnalysisService createAnalysisService() { return new AnalysisService(this.rmContext); }
 
   protected ClientRMService createClientRMService() {
     return new ClientRMService(this.rmContext, scheduler, this.rmAppManager,

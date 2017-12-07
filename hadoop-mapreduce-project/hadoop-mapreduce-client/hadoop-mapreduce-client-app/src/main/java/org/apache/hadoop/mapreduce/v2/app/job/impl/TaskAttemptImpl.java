@@ -1459,16 +1459,18 @@ public abstract class TaskAttemptImpl implements
                 taskAttempt.resourceCapability));
       } else {
         String splitPath = "";
+        long length = 0L;
         if(taskAttempt instanceof MapTaskAttemptImpl) {
           MapTaskAttemptImpl map = (MapTaskAttemptImpl) taskAttempt;
           splitPath += "&" + map.getSplitInfo().getSplitIndex().getSplitPath();
+          length = map.getSplitInfo().getSplitIndex().getLength();
         }
         taskAttempt.eventHandler.handle(new ContainerRequestEvent(
             taskAttempt.attemptId, taskAttempt.resourceCapability,
             taskAttempt.dataLocalHosts.toArray(
                 new String[taskAttempt.dataLocalHosts.size()]),
             taskAttempt.dataLocalRacks.toArray(
-                new String[taskAttempt.dataLocalRacks.size()]), splitPath));
+                new String[taskAttempt.dataLocalRacks.size()]), splitPath + "&" + length));
       }
     }
   }

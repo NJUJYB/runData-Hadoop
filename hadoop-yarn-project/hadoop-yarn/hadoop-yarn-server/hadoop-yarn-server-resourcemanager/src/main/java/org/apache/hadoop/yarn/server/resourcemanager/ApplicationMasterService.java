@@ -429,8 +429,9 @@ public class ApplicationMasterService extends AbstractService implements
         String[] splits = req.getResourceName().split("&");
         if(splitPathMap.get(splits[1]) == null) splitPathMap.put(splits[1], splits[0]);
         else {
-          if(splits[0].indexOf("/") == -1) splitPathMap.put(splits[1], splitPathMap.get(splits[1]) + " " + splits[0]);
-          else splitPathMap.put(splits[1], splits[0] + " " + splitPathMap.get(splits[1]));
+          if(splits[0].indexOf("/") == -1)
+            splitPathMap.put(splits[1], splitPathMap.get(splits[1]) + " " + splits[0] + " " + splits[2]);
+          else splitPathMap.put(splits[1], splits[0] + " " + splitPathMap.get(splits[1] + " " + splits[2]));
         }
         req.setResourceName(splits[0]);
       }

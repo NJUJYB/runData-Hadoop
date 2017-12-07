@@ -5,5 +5,8 @@ package org.apache.hadoop.yarn.server.resourcemanager.ddanalysis.event;
  */
 public enum LogsEventType {
     //Resource Logs
-    RESOURCE_ADDED
+    RESOURCE_ADDED,
+
+    //Analysis Request
+    ANALYSIS_REQUEST
 }

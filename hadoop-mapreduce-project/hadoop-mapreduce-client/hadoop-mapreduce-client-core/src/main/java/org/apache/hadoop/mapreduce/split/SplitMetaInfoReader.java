@@ -87,7 +87,7 @@ public class SplitMetaInfoReader {
         String pathName = new String(pathNameByte);
         long start = splitFile.readLong();
         long length = splitFile.readLong();
-        splitPathMap.put("" + offset, pathName);
+        splitPathMap.put("" + offset, pathName + "#" + length);
       } catch (EOFException e) {}
     }
     splitFile.close();
@@ -96,11 +96,11 @@ public class SplitMetaInfoReader {
     for (int i = 0; i < numSplits; i++) {
       JobSplit.SplitMetaInfo splitMetaInfo = new JobSplit.SplitMetaInfo();
       splitMetaInfo.readFields(in);
-      String splitPath = splitPathMap.get("" + splitMetaInfo.getStartOffset());
+      String[] splitInfo = splitPathMap.get("" + splitMetaInfo.getStartOffset()).split("#");
       JobSplit.TaskSplitIndex splitIndex = new JobSplit.TaskSplitIndex(
           jobSplitFile, 
           splitMetaInfo.getStartOffset(),
-          splitPath);
+          splitInfo[0], splitInfo[1]);
       allSplitMetaInfo[i] = new JobSplit.TaskSplitMetaInfo(splitIndex, 
           splitMetaInfo.getLocations(), 
           splitMetaInfo.getInputDataLength());
