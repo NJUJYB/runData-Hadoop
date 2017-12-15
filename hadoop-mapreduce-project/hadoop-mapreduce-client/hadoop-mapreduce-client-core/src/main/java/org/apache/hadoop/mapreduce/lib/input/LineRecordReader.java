@@ -83,6 +83,7 @@ public class LineRecordReader extends RecordReader<LongWritable, Text> {
     // open the file and seek to the start of the split
     final FileSystem fs = file.getFileSystem(job);
     fileIn = fs.open(file);
+    String splitName = genericSplit.toString();
     
     CompressionCodec codec = new CompressionCodecFactory(job).getCodec(file);
     if (null!=codec) {
@@ -94,18 +95,18 @@ public class LineRecordReader extends RecordReader<LongWritable, Text> {
             fileIn, decompressor, start, end,
             SplittableCompressionCodec.READ_MODE.BYBLOCK);
         in = new CompressedSplitLineReader(cIn, job,
-            this.recordDelimiterBytes);
+            this.recordDelimiterBytes, splitName);
         start = cIn.getAdjustedStart();
         end = cIn.getAdjustedEnd();
         filePosition = cIn;
       } else {
         in = new SplitLineReader(codec.createInputStream(fileIn,
-            decompressor), job, this.recordDelimiterBytes);
+            decompressor), job, this.recordDelimiterBytes, splitName);
         filePosition = fileIn;
       }
     } else {
       fileIn.seek(start);
-      in = new SplitLineReader(fileIn, job, this.recordDelimiterBytes);
+      in = new SplitLineReader(fileIn, job, this.recordDelimiterBytes, splitName);
       filePosition = fileIn;
     }
     // If this is not the first split, we always throw away first record

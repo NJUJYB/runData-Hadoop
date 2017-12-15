@@ -117,9 +117,9 @@ public class CompressedSplitLineReader extends SplitLineReader {
 
   public CompressedSplitLineReader(SplitCompressionInputStream in,
                                    Configuration conf,
-                                   byte[] recordDelimiterBytes)
+                                   byte[] recordDelimiterBytes, String splitName)
                                        throws IOException {
-    super(in, conf, recordDelimiterBytes);
+    super(in, conf, recordDelimiterBytes, splitName);
     scin = in;
     usingCRLF = (recordDelimiterBytes == null);
   }

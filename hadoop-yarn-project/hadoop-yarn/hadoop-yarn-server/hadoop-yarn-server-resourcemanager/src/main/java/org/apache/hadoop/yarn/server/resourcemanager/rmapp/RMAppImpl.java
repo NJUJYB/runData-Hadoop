@@ -1071,8 +1071,8 @@ public class RMAppImpl implements RMApp, Recoverable {
           (RMAppFinishedAttemptEvent)event;
       app.rmContext.getLogsService().handle(new ResourceAllocationLogsEvent(
               System.currentTimeMillis() + " " + app.applicationId.toString() + ": Finished!"));
-      if(app.rmContext.getAnalysisService() != null)
-        app.rmContext.getAnalysisService().handle(new AnalysisRequestEvent(app.applicationId.toString()));
+      //if(app.rmContext.getAnalysisService() != null)
+        //app.rmContext.getAnalysisService().handle(new AnalysisRequestEvent(app.applicationId.toString()));
       app.diagnostics.append(finishedEvent.getDiagnostics());
       super.transition(app, event);
     };

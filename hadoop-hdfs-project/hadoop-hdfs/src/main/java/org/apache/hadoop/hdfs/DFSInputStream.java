@@ -17,8 +17,7 @@
  */
 package org.apache.hadoop.hdfs;
 
-import java.io.EOFException;
-import java.io.IOException;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.AbstractMap;
@@ -676,7 +675,7 @@ implements ByteBufferReadable, CanSetDropBehind, CanSetReadahead,
       readStatistics.addRemoteBytes(nRead);
     }
   }
-  
+
   /**
    * Used to read bytes into a byte[]
    */

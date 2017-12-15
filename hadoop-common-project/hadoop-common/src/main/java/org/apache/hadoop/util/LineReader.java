@@ -18,9 +18,8 @@
 
 package org.apache.hadoop.util;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.ByteBuffer;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
@@ -55,6 +54,8 @@ public class LineReader implements Closeable {
 
   // The line delimiter
   private final byte[] recordDelimiterBytes;
+
+  protected String splitName = null;
 
   /**
    * Create a line reader that reads from the given stream using the
@@ -134,11 +135,22 @@ public class LineReader implements Closeable {
    * @throws IOException
    */
   public LineReader(InputStream in, Configuration conf,
-      byte[] recordDelimiterBytes) throws IOException {
+      byte[] recordDelimiterBytes, String splitName) throws IOException {
     this.in = in;
     this.bufferSize = conf.getInt("io.file.buffer.size", DEFAULT_BUFFER_SIZE);
     this.buffer = new byte[this.bufferSize];
     this.recordDelimiterBytes = recordDelimiterBytes;
+
+    this.splitName = splitName;
+    File file = new File("/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/blockCache");
+    try {
+      if (!file.exists()) {
+        file.createNewFile();
+      } else this.splitName = null;
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
   }
 
 
@@ -177,7 +189,33 @@ public class LineReader implements Closeable {
 
   protected int fillBuffer(InputStream in, byte[] buffer, boolean inDelimiter)
       throws IOException {
-    return in.read(buffer);
+    int ret = in.read(buffer);
+    if(splitName != null){
+      File file = new File("/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/blockCache");
+      byte[] bytes = null;
+      int startPos = 0;
+      if(bufferPosn >= ret) {
+        if(ret > 0) bytes = new byte[ret];
+      } else {
+        bytes = new byte[ret - bufferPosn];
+        startPos = bufferPosn;
+      }
+      if(bytes == null) return ret;
+      for(int i = startPos; i < ret; ++i) bytes[i] = buffer[i];
+      try {
+        if (!file.exists()) {
+          file.createNewFile();
+        }
+        FileOutputStream fos = new FileOutputStream(file, true);
+        fos.write(bytes);
+        fos.flush();
+        fos.close();
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+    }
+    return ret;
   }
 
   /**

@@ -29,9 +29,9 @@ ssh slave1 << remotessh
 cd ~/Desktop/hadoop/hadoop-2.6.2/
 hadoop jar ~/Desktop/InvertedIndex.jar /input/. /out1
 
-sleep 10
 exit
 remotessh
+#sleep 180
 #hadoop jar ~/Desktop/InvertedIndex.jar /input/. /out2
 cd ~
 #echo "jyb" | sudo -S wondershaper clear eth0
