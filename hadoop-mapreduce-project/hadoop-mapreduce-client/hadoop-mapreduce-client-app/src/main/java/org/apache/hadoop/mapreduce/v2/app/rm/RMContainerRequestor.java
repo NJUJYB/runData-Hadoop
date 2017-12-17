@@ -39,11 +39,7 @@ import org.apache.hadoop.mapreduce.v2.app.AppContext;
 import org.apache.hadoop.mapreduce.v2.app.client.ClientService;
 import org.apache.hadoop.yarn.api.protocolrecords.AllocateRequest;
 import org.apache.hadoop.yarn.api.protocolrecords.AllocateResponse;
-import org.apache.hadoop.yarn.api.records.ContainerId;
-import org.apache.hadoop.yarn.api.records.Priority;
-import org.apache.hadoop.yarn.api.records.Resource;
-import org.apache.hadoop.yarn.api.records.ResourceBlacklistRequest;
-import org.apache.hadoop.yarn.api.records.ResourceRequest;
+import org.apache.hadoop.yarn.api.records.*;
 import org.apache.hadoop.yarn.exceptions.YarnException;
 import org.apache.hadoop.yarn.exceptions.YarnRuntimeException;
 import org.apache.hadoop.yarn.factories.RecordFactory;
@@ -186,6 +182,19 @@ public abstract class RMContainerRequestor extends RMCommunicator {
           super.getApplicationProgress(), new ArrayList<ResourceRequest>(ask),
           new ArrayList<ContainerId>(release), blacklistRequest);
     AllocateResponse allocateResponse = scheduler.allocate(allocateRequest);
+
+    for(Container c : allocateResponse.getAllocatedContainers()){
+      if(c.getNodeHttpAddress().indexOf("&") != -1){
+        String[] splits = c.getNodeHttpAddress().split("&");
+        Map<Long, SplitDataInfo> blocksNeededDeploy = getContext().getBlocksNeededDeploy();
+        if(blocksNeededDeploy == null) blocksNeededDeploy = new HashMap<Long, SplitDataInfo>();
+        SplitDataInfo sdi = SplitDataInfo.createNewInstanceRMToAppMaster(splits);
+        blocksNeededDeploy.put(sdi.getBlockId(), sdi);
+        getContext().setBlocksNeededDeploy(blocksNeededDeploy);
+        c.setNodeHttpAddress(splits[0]);
+      }
+    }
+
     lastResponseID = allocateResponse.getResponseId();
     availableResources = allocateResponse.getAvailableResources();
     lastClusterNmCount = clusterNmCount;

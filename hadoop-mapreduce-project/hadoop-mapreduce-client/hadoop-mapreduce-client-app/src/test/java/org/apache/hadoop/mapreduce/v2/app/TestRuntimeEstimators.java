@@ -64,11 +64,7 @@ import org.apache.hadoop.mapreduce.v2.app.speculate.TaskRuntimeEstimator;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authorize.AccessControlList;
 import org.apache.hadoop.service.CompositeService;
-import org.apache.hadoop.yarn.api.records.ApplicationAttemptId;
-import org.apache.hadoop.yarn.api.records.ApplicationId;
-import org.apache.hadoop.yarn.api.records.ContainerId;
-import org.apache.hadoop.yarn.api.records.NodeId;
-import org.apache.hadoop.yarn.api.records.Token;
+import org.apache.hadoop.yarn.api.records.*;
 import org.apache.hadoop.yarn.event.AsyncDispatcher;
 import org.apache.hadoop.yarn.event.EventHandler;
 import org.apache.hadoop.yarn.factories.RecordFactory;
@@ -883,6 +879,16 @@ public class TestRuntimeEstimators {
     public String getNMHostname() {
       // bogus - Not Required
       return null;
+    }
+
+    @Override
+    public Map<Long, SplitDataInfo> getBlocksNeededDeploy() {
+      return null;
+    }
+
+    @Override
+    public void setBlocksNeededDeploy(Map<Long, SplitDataInfo> blocksNeededDeploys) {
+
     }
   }
 }

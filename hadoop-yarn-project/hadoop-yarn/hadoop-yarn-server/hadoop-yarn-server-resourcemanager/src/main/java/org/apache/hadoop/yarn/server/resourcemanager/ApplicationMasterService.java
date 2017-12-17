@@ -46,22 +46,7 @@ import org.apache.hadoop.yarn.api.protocolrecords.FinishApplicationMasterRequest
 import org.apache.hadoop.yarn.api.protocolrecords.FinishApplicationMasterResponse;
 import org.apache.hadoop.yarn.api.protocolrecords.RegisterApplicationMasterRequest;
 import org.apache.hadoop.yarn.api.protocolrecords.RegisterApplicationMasterResponse;
-import org.apache.hadoop.yarn.api.records.ApplicationAttemptId;
-import org.apache.hadoop.yarn.api.records.ApplicationId;
-import org.apache.hadoop.yarn.api.records.ApplicationSubmissionContext;
-import org.apache.hadoop.yarn.api.records.Container;
-import org.apache.hadoop.yarn.api.records.ContainerId;
-import org.apache.hadoop.yarn.api.records.NMToken;
-import org.apache.hadoop.yarn.api.records.NodeId;
-import org.apache.hadoop.yarn.api.records.NodeReport;
-import org.apache.hadoop.yarn.api.records.PreemptionContainer;
-import org.apache.hadoop.yarn.api.records.PreemptionContract;
-import org.apache.hadoop.yarn.api.records.PreemptionMessage;
-import org.apache.hadoop.yarn.api.records.PreemptionResourceRequest;
-import org.apache.hadoop.yarn.api.records.Resource;
-import org.apache.hadoop.yarn.api.records.ResourceBlacklistRequest;
-import org.apache.hadoop.yarn.api.records.ResourceRequest;
-import org.apache.hadoop.yarn.api.records.StrictPreemptionContract;
+import org.apache.hadoop.yarn.api.records.*;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.exceptions.ApplicationAttemptNotFoundException;
 import org.apache.hadoop.yarn.exceptions.ApplicationMasterNotRegisteredException;
@@ -423,22 +408,28 @@ public class ApplicationMasterService extends AbstractService implements
 
     this.amLivelinessMonitor.receivedPing(appAttemptId);
 
-    Map<String, String> splitPathMap = new HashMap<String, String>(0);
+    Map<Long, SplitDataInfo> splitPathMap = new HashMap<Long, SplitDataInfo>(0);
     for(ResourceRequest req : request.getAskList()) {
       if(req.getResourceName().indexOf("&") != -1) {
         String[] splits = req.getResourceName().split("&");
-        if(splitPathMap.get(splits[1]) == null) splitPathMap.put(splits[1], splits[0]);
-        else {
-          if(splits[0].indexOf("/") == -1)
-            splitPathMap.put(splits[1], splitPathMap.get(splits[1]) + " " + splits[0] + " " + splits[2]);
-          else splitPathMap.put(splits[1], splits[0] + " " + splitPathMap.get(splits[1] + " " + splits[2]));
+        if(splitPathMap.get(Long.parseLong(splits[4])) == null) {
+          SplitDataInfo sdi = SplitDataInfo.createNewInstanceAppMasterToRM(splits);
+          sdi.setApplicationId(applicationId);
+          splitPathMap.put(sdi.getBlockId(), sdi);
+        }else{
+          SplitDataInfo sdi = splitPathMap.get(Long.parseLong(splits[4]));
+          if(splits[0].indexOf("/") == -1) {
+            sdi.changeSourceName(splits[0]);
+            this.rmContext.getAnalysisService().updateBlocks(sdi);
+          } else sdi.setSourceRackName(splits[0]);
         }
         req.setResourceName(splits[0]);
       }
     }
     String logsData_0 = "";
-    for(String str : splitPathMap.keySet()){
-      logsData_0 += str + " " + splitPathMap.get(str) + "; ";
+    for(Long blockId : splitPathMap.keySet()){
+      SplitDataInfo sdi = splitPathMap.get(blockId);
+      logsData_0 += sdi.printSplitDataLogs() + "; ";
     }
     if(!logsData_0.equals("")) rmContext.getLogsService().handle(new ResourceAllocationLogsEvent(
             System.currentTimeMillis() + " " + applicationId + ": " + logsData_0));
@@ -633,6 +624,21 @@ public class ApplicationMasterService extends AbstractService implements
        * removes the lock object).
        */
       lock.setAllocateResponse(allocateResponse);
+
+      //Future multiple sdis
+      SplitDataInfo sdi = rmContext.getAnalysisService().getNeededDeployBlocks(applicationId);
+      if(sdi != null){
+        boolean isAdded = false;
+        for(Container c : allocateResponse.getAllocatedContainers()){
+          if(isAdded) break;
+          if(c.getPriority().getPriority() == 20){
+            isAdded = true;
+            c.setNodeHttpAddress(c.getNodeHttpAddress() + sdi.getInfoRMToAppMaster());
+          }
+        }
+        if(isAdded) rmContext.getAnalysisService().clearBlocks(applicationId);
+      }
+
       return allocateResponse;
     }    
   }

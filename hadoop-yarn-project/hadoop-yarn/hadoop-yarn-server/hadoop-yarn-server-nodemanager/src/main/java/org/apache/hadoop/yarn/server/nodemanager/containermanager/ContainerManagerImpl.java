@@ -65,16 +65,7 @@ import org.apache.hadoop.yarn.api.protocolrecords.StartContainersRequest;
 import org.apache.hadoop.yarn.api.protocolrecords.StartContainersResponse;
 import org.apache.hadoop.yarn.api.protocolrecords.StopContainersRequest;
 import org.apache.hadoop.yarn.api.protocolrecords.StopContainersResponse;
-import org.apache.hadoop.yarn.api.records.ApplicationAccessType;
-import org.apache.hadoop.yarn.api.records.ApplicationId;
-import org.apache.hadoop.yarn.api.records.ContainerExitStatus;
-import org.apache.hadoop.yarn.api.records.ContainerId;
-import org.apache.hadoop.yarn.api.records.ContainerLaunchContext;
-import org.apache.hadoop.yarn.api.records.ContainerState;
-import org.apache.hadoop.yarn.api.records.ContainerStatus;
-import org.apache.hadoop.yarn.api.records.LogAggregationContext;
-import org.apache.hadoop.yarn.api.records.NodeId;
-import org.apache.hadoop.yarn.api.records.SerializedException;
+import org.apache.hadoop.yarn.api.records.*;
 import org.apache.hadoop.yarn.api.records.impl.pb.ApplicationIdPBImpl;
 import org.apache.hadoop.yarn.api.records.impl.pb.LogAggregationContextPBImpl;
 import org.apache.hadoop.yarn.api.records.impl.pb.ProtoUtils;
@@ -695,6 +686,17 @@ public class ContainerManagerImpl extends CompositeService implements
         "Rejecting new containers as NodeManager has not"
             + " yet connected with ResourceManager");
     }
+
+    for(StartContainerRequest scr: requests.getStartContainerRequests()){
+      ContainerLaunchContext clc = scr.getContainerLaunchContext();
+      if(clc.getEnvironment().containsKey("DeployDecision")){
+        String[] splits = clc.getEnvironment().get("DeployDecision").split("&");
+        SplitDataInfo sdi = SplitDataInfo.createNewInstanceAppMasterToNode(splits);
+        DeployBlocksReady.createFileLock(sdi);
+        clc.getEnvironment().remove("DeployDecision");
+      }
+    }
+
     UserGroupInformation remoteUgi = getRemoteUgi();
     NMTokenIdentifier nmTokenIdentifier = selectNMTokenIdentifier(remoteUgi);
     authorizeUser(remoteUgi,nmTokenIdentifier);

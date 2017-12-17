@@ -22,12 +22,14 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
+import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
+import org.apache.hadoop.yarn.api.records.SplitDataInfo;
 
 /**
  * This class groups the fundamental classes associated with
@@ -190,8 +192,7 @@ public class JobSplit {
   public static class TaskSplitIndex {
     private String splitLocation;
     private long startOffset;
-    private String splitPath = "";
-    private long length;
+    private SplitDataInfo sdi;
 
     public TaskSplitIndex(){
       this("", 0);
@@ -201,11 +202,12 @@ public class JobSplit {
       this.startOffset = startOffset;
     }
 
-    public TaskSplitIndex(String splitLocation, long startOffset,
-                          String splitPath, String length) {
+    public TaskSplitIndex(String splitLocation, long startOffset, SplitDataInfo sdi) {
       this(splitLocation, startOffset);
-      this.splitPath = splitPath;
-      this.length = Long.parseLong(length);
+      this.sdi = sdi;
+      FileToBlockInfo ftb = new FileToBlockInfo(sdi);
+      this.sdi.setBlockId(ftb.getBlockId());
+      this.sdi.setBlockSize(ftb.getBlockSize());
     }
 
     public long getStartOffset() {
@@ -222,7 +224,10 @@ public class JobSplit {
       Text.writeString(out, splitLocation);
       WritableUtils.writeVLong(out, startOffset);
     }
-    public String getSplitPath() { return splitPath; }
-    public long getLength() {return length; }
+
+    public String getInfoAppMasterToRM() { return sdi.getInfoAppMasterToRM(); }
+    public SplitDataInfo getSplitDataInfo() { return sdi; }
+
+    public void clearSplitDataInfo() { sdi = null; }
   }
 }

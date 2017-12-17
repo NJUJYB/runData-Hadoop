@@ -45,6 +45,7 @@ import org.apache.hadoop.service.Service;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.yarn.api.records.ApplicationAttemptId;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.api.records.SplitDataInfo;
 import org.apache.hadoop.yarn.event.EventHandler;
 import org.apache.hadoop.yarn.exceptions.YarnRuntimeException;
 import org.apache.hadoop.yarn.factory.providers.RecordFactoryProvider;
@@ -398,5 +399,14 @@ public class JobHistory extends AbstractService implements HistoryContext {
   public String getNMHostname() {
     // bogus - Not Required
     return null;
+  }
+
+  @Override
+  public Map<Long, SplitDataInfo> getBlocksNeededDeploy() {
+    return null;
+  }
+
+  @Override
+  public void setBlocksNeededDeploy(Map<Long, SplitDataInfo> blocksNeededDeploys) {
   }
 }

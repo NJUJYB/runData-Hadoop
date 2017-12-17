@@ -105,16 +105,7 @@ import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.util.StringInterner;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.yarn.api.ApplicationConstants.Environment;
-import org.apache.hadoop.yarn.api.records.ApplicationAccessType;
-import org.apache.hadoop.yarn.api.records.Container;
-import org.apache.hadoop.yarn.api.records.ContainerId;
-import org.apache.hadoop.yarn.api.records.ContainerLaunchContext;
-import org.apache.hadoop.yarn.api.records.LocalResource;
-import org.apache.hadoop.yarn.api.records.LocalResourceType;
-import org.apache.hadoop.yarn.api.records.LocalResourceVisibility;
-import org.apache.hadoop.yarn.api.records.NodeId;
-import org.apache.hadoop.yarn.api.records.Resource;
-import org.apache.hadoop.yarn.api.records.URL;
+import org.apache.hadoop.yarn.api.records.*;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.event.EventHandler;
 import org.apache.hadoop.yarn.exceptions.YarnRuntimeException;
@@ -1458,19 +1449,17 @@ public abstract class TaskAttemptImpl implements
                 taskAttempt.attemptId, 
                 taskAttempt.resourceCapability));
       } else {
-        String splitPath = "";
-        long length = 0L;
+        String splitInfo = "";
         if(taskAttempt instanceof MapTaskAttemptImpl) {
           MapTaskAttemptImpl map = (MapTaskAttemptImpl) taskAttempt;
-          splitPath += "&" + map.getSplitInfo().getSplitIndex().getSplitPath();
-          length = map.getSplitInfo().getSplitIndex().getLength();
+          splitInfo += map.getSplitInfo().getSplitIndex().getInfoAppMasterToRM();
         }
         taskAttempt.eventHandler.handle(new ContainerRequestEvent(
             taskAttempt.attemptId, taskAttempt.resourceCapability,
             taskAttempt.dataLocalHosts.toArray(
                 new String[taskAttempt.dataLocalHosts.size()]),
             taskAttempt.dataLocalRacks.toArray(
-                new String[taskAttempt.dataLocalRacks.size()]), splitPath + "&" + length));
+                new String[taskAttempt.dataLocalRacks.size()]), splitInfo));
       }
     }
   }
@@ -1510,6 +1499,8 @@ public abstract class TaskAttemptImpl implements
     return ipPattern.matcher(src).matches();
   }
 
+  public AppContext getAppContext(){ return appContext; }
+
   private static class ContainerAssignedTransition implements
       SingleArcTransition<TaskAttemptImpl, TaskAttemptEvent> {
     @SuppressWarnings({ "unchecked" })
@@ -1530,7 +1521,28 @@ public abstract class TaskAttemptImpl implements
           taskAttempt.remoteTask, taskAttempt.jvmID);
 
       taskAttempt.computeRackAndLocality();
-      
+
+      SplitDataInfo sdi = null;
+      if(taskAttempt instanceof MapTaskAttemptImpl) {
+        MapTaskAttemptImpl map = (MapTaskAttemptImpl) taskAttempt;
+        sdi = map.getSplitInfo().getSplitIndex().getSplitDataInfo();
+        boolean needsDeploy = false;
+        if(taskAttempt.getAppContext().getBlocksNeededDeploy() != null){
+          for(Long blockId: taskAttempt.getAppContext().getBlocksNeededDeploy().keySet()){
+            if(blockId == sdi.getBlockId()) {
+              needsDeploy = true;
+              sdi = taskAttempt.getAppContext().getBlocksNeededDeploy().get(blockId);
+              sdi.setStart(map.getSplitInfo().getSplitIndex().getSplitDataInfo().getStart());
+              map.getSplitInfo().getSplitIndex().clearSplitDataInfo();
+              sdi.setContainerId(container.getId().toString());
+              taskAttempt.getAppContext().getBlocksNeededDeploy().remove(blockId);
+              break;
+            }
+          }
+          if(!needsDeploy) sdi = null;
+        }
+      }
+
       //launch the container
       //create the container object to be launched for a given Task attempt
       ContainerLaunchContext launchContext = createContainerLaunchContext(
@@ -1539,7 +1551,8 @@ public abstract class TaskAttemptImpl implements
           taskAttempt.taskAttemptListener, taskAttempt.credentials);
       taskAttempt.eventHandler
         .handle(new ContainerRemoteLaunchEvent(taskAttempt.attemptId,
-          launchContext, container, taskAttempt.remoteTask));
+          launchContext, container, taskAttempt.remoteTask,
+          sdi));
 
       // send event to speculator that our container needs are satisfied
       taskAttempt.eventHandler.handle

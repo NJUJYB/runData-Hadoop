@@ -4,6 +4,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.service.AbstractService;
 import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.api.records.SplitDataInfo;
 import org.apache.hadoop.yarn.server.resourcemanager.RMContext;
 import org.apache.hadoop.yarn.server.resourcemanager.ddanalysis.event.AnalysisRequestEvent;
 import org.apache.hadoop.yarn.server.resourcemanager.ddanalysis.event.LogsEvent;
@@ -12,6 +14,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -31,6 +35,7 @@ public class AnalysisService extends AbstractService implements DataDrivenAnalys
     private Thread eventHandlingThread;
     private final AtomicBoolean stopped;
     protected BlockingQueue<LogsEvent> eventQueue = new LinkedBlockingQueue<LogsEvent>();
+    private Map<String, SplitDataInfo> blocksNeededDeploy = null;
 
     public AnalysisService(RMContext rmContext) {
         super(LogsService.class.getName());
@@ -49,6 +54,8 @@ public class AnalysisService extends AbstractService implements DataDrivenAnalys
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+
+        blocksNeededDeploy = new HashMap<String, SplitDataInfo>();
     }
 
     @Override
@@ -78,6 +85,8 @@ public class AnalysisService extends AbstractService implements DataDrivenAnalys
         super.serviceStart();
     }
 
+    public void clearBlocks(ApplicationId applicationId) { blocksNeededDeploy.remove(applicationId.toString()); }
+
     protected synchronized void handleEvent(LogsEvent event) {
         switch (event.getType()) {
             case ANALYSIS_REQUEST: {
@@ -94,7 +103,7 @@ public class AnalysisService extends AbstractService implements DataDrivenAnalys
                     }
                 }
 
-                args[0] = "hdfs://master:9000/input/jin.txt.segmented";
+                args[0] = "hdfs://master:9000/input/jin1.txt.segmented";
                 args[1] = "114.212.85.99" + port;
                 args[2] = "114.212.85.203" + port;
                 try {
@@ -113,5 +122,15 @@ public class AnalysisService extends AbstractService implements DataDrivenAnalys
             eventQueue.put(event);
         } catch (InterruptedException e) {
         }
+    }
+
+    public void updateBlocks(SplitDataInfo sdi) {
+        sdi.setSourceAddress("114.212.85.99");
+        sdi.setTargetName("slave1");
+        blocksNeededDeploy.put(sdi.getApplicationId().toString(), sdi);
+    }
+
+    public SplitDataInfo getNeededDeployBlocks(ApplicationId applicationId) {
+        return blocksNeededDeploy.get(applicationId.toString());
     }
 }

@@ -29,6 +29,7 @@ import org.apache.hadoop.mapreduce.v2.app.job.Job;
 import org.apache.hadoop.mapreduce.v2.hs.MockHistoryJobs.JobsPair;
 import org.apache.hadoop.mapreduce.v2.hs.webapp.dao.JobsInfo;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.api.records.SplitDataInfo;
 import org.apache.hadoop.yarn.exceptions.YarnRuntimeException;
 
 public class MockHistoryContext extends MockAppContext implements HistoryContext {
@@ -109,4 +110,13 @@ public class MockHistoryContext extends MockAppContext implements HistoryContext
         offset, count, user, queue, sBegin, sEnd, fBegin, fEnd, jobState);
   }
 
+  @Override
+  public Map<Long, SplitDataInfo> getBlocksNeededDeploy() {
+    return super.getBlocksNeededDeploy();
+  }
+
+  @Override
+  public void setBlocksNeededDeploy(Map<Long, SplitDataInfo> blocksNeededDeploys) {
+    super.setBlocksNeededDeploy(blocksNeededDeploys);
+  }
 }

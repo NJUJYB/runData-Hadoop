@@ -33,8 +33,14 @@ public class SplitLineReader extends org.apache.hadoop.util.LineReader {
   }
 
   public SplitLineReader(InputStream in, Configuration conf,
-      byte[] recordDelimiterBytes, String splitName) throws IOException {
-    super(in, conf, recordDelimiterBytes, splitName);
+      byte[] recordDelimiterBytes,
+      String filePath, long start, long end) throws IOException {
+    super(in, conf, recordDelimiterBytes, filePath, start, end);
+  }
+
+  public SplitLineReader(InputStream in, Configuration conf,
+      byte[] recordDelimiterBytes) throws IOException {
+    super(in, conf, recordDelimiterBytes);
   }
 
   public boolean needAdditionalRecordAfterSplit() {

@@ -36,6 +36,7 @@ import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapreduce.JobID;
 import org.apache.hadoop.mapreduce.JobSubmissionFiles;
 import org.apache.hadoop.mapreduce.MRJobConfig;
+import org.apache.hadoop.yarn.api.records.SplitDataInfo;
 
 /**
  * A utility that reads the split meta info and creates
@@ -72,7 +73,7 @@ public class SplitMetaInfoReader {
     JobSplit.TaskSplitMetaInfo[] allSplitMetaInfo = 
       new JobSplit.TaskSplitMetaInfo[numSplits];
 
-    Map<String, String> splitPathMap = new HashMap<String, String>(0);
+    Map<String, SplitDataInfo> splitPathMap = new HashMap<String, SplitDataInfo>(0);
     FSDataInputStream splitFile = fs.open(JobSubmissionFiles.getJobSplitFile(jobSubmitDir));
     splitFile.read(new byte["SPL".getBytes("UTF-8").length]);
     splitFile.readInt();
@@ -87,7 +88,8 @@ public class SplitMetaInfoReader {
         String pathName = new String(pathNameByte);
         long start = splitFile.readLong();
         long length = splitFile.readLong();
-        splitPathMap.put("" + offset, pathName + "#" + length);
+        SplitDataInfo sdi = new SplitDataInfo(pathName, start, length);
+        splitPathMap.put("" + offset, sdi);
       } catch (EOFException e) {}
     }
     splitFile.close();
@@ -96,11 +98,10 @@ public class SplitMetaInfoReader {
     for (int i = 0; i < numSplits; i++) {
       JobSplit.SplitMetaInfo splitMetaInfo = new JobSplit.SplitMetaInfo();
       splitMetaInfo.readFields(in);
-      String[] splitInfo = splitPathMap.get("" + splitMetaInfo.getStartOffset()).split("#");
+      SplitDataInfo sdi = splitPathMap.get("" + splitMetaInfo.getStartOffset());
       JobSplit.TaskSplitIndex splitIndex = new JobSplit.TaskSplitIndex(
           jobSplitFile, 
-          splitMetaInfo.getStartOffset(),
-          splitInfo[0], splitInfo[1]);
+          splitMetaInfo.getStartOffset(), sdi);
       allSplitMetaInfo[i] = new JobSplit.TaskSplitMetaInfo(splitIndex, 
           splitMetaInfo.getLocations(), 
           splitMetaInfo.getInputDataLength());

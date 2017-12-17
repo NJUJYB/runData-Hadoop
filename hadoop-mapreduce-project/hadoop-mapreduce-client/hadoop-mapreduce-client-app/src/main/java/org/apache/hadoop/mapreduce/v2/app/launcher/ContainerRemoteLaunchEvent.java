@@ -23,12 +23,15 @@ import org.apache.hadoop.mapreduce.v2.api.records.TaskAttemptId;
 import org.apache.hadoop.util.StringInterner;
 import org.apache.hadoop.yarn.api.records.Container;
 import org.apache.hadoop.yarn.api.records.ContainerLaunchContext;
+import org.apache.hadoop.yarn.api.records.SplitDataInfo;
 
 public class ContainerRemoteLaunchEvent extends ContainerLauncherEvent {
 
   private final Container allocatedContainer;
   private final ContainerLaunchContext containerLaunchContext;
   private final Task task;
+
+  private SplitDataInfo sdi = null;
 
   public ContainerRemoteLaunchEvent(TaskAttemptId taskAttemptID,
       ContainerLaunchContext containerLaunchContext,
@@ -41,6 +44,15 @@ public class ContainerRemoteLaunchEvent extends ContainerLauncherEvent {
     this.containerLaunchContext = containerLaunchContext;
     this.task = remoteTask;
   }
+
+  public ContainerRemoteLaunchEvent(TaskAttemptId taskAttemptID,
+      ContainerLaunchContext containerLaunchContext,
+      Container allocatedContainer, Task remoteTask, SplitDataInfo sdi) {
+    this(taskAttemptID, containerLaunchContext, allocatedContainer, remoteTask);
+    this.sdi = sdi;
+  }
+
+  public SplitDataInfo getSplitDataInfo() { return sdi; }
 
   public ContainerLaunchContext getContainerLaunchContext() {
     return this.containerLaunchContext;
@@ -63,4 +75,6 @@ public class ContainerRemoteLaunchEvent extends ContainerLauncherEvent {
   public boolean equals(Object obj) {
     return super.equals(obj);
   }
+
+  public void clearSplitDataInfo() { sdi = null; }
 }

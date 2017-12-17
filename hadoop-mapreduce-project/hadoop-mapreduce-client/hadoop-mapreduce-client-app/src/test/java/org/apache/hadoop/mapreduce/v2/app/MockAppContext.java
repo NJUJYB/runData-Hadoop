@@ -26,6 +26,7 @@ import org.apache.hadoop.mapreduce.v2.api.records.JobId;
 import org.apache.hadoop.mapreduce.v2.app.job.Job;
 import org.apache.hadoop.yarn.api.records.ApplicationAttemptId;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.api.records.SplitDataInfo;
 import org.apache.hadoop.yarn.event.EventHandler;
 import org.apache.hadoop.yarn.security.client.ClientToAMTokenSecretManager;
 import org.apache.hadoop.yarn.util.Clock;
@@ -147,5 +148,14 @@ public class MockAppContext implements AppContext {
   public String getNMHostname() {
     // bogus - Not Required
     return null;
+  }
+
+  @Override
+  public Map<Long, SplitDataInfo> getBlocksNeededDeploy() {
+    return null;
+  }
+
+  @Override
+  public void setBlocksNeededDeploy(Map<Long, SplitDataInfo> blocksNeededDeploys) {
   }
 }

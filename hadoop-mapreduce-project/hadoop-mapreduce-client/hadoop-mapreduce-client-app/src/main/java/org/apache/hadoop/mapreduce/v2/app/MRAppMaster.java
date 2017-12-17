@@ -130,6 +130,7 @@ import org.apache.hadoop.yarn.api.ApplicationConstants.Environment;
 import org.apache.hadoop.yarn.api.records.ApplicationAttemptId;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.ContainerId;
+import org.apache.hadoop.yarn.api.records.SplitDataInfo;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.event.AsyncDispatcher;
 import org.apache.hadoop.yarn.event.Dispatcher;
@@ -916,11 +917,20 @@ public class MRAppMaster extends CompositeService {
     private final Configuration conf;
     private final ClusterInfo clusterInfo = new ClusterInfo();
     private final ClientToAMTokenSecretManager clientToAMTokenSecretManager;
+    private Map<Long, SplitDataInfo> blocksNeededDeploy = null;
 
     public RunningAppContext(Configuration config) {
       this.conf = config;
       this.clientToAMTokenSecretManager =
           new ClientToAMTokenSecretManager(appAttemptID, null);
+    }
+
+    @Override
+    public Map<Long, SplitDataInfo> getBlocksNeededDeploy() { return blocksNeededDeploy; }
+
+    @Override
+    public void setBlocksNeededDeploy(Map<Long, SplitDataInfo> blocksNeededDeploys) {
+      this.blocksNeededDeploy = blocksNeededDeploys;
     }
 
     @Override

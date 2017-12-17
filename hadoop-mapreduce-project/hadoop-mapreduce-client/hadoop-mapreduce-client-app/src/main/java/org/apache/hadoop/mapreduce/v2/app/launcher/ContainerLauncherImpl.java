@@ -52,6 +52,8 @@ import org.apache.hadoop.yarn.api.protocolrecords.StopContainersRequest;
 import org.apache.hadoop.yarn.api.protocolrecords.StopContainersResponse;
 import org.apache.hadoop.yarn.api.records.ContainerId;
 import org.apache.hadoop.yarn.api.records.ContainerLaunchContext;
+import org.apache.hadoop.yarn.api.records.SplitDataInfo;
+import org.apache.hadoop.yarn.client.ServerProxy;
 import org.apache.hadoop.yarn.client.api.impl.ContainerManagementProtocolProxy;
 import org.apache.hadoop.yarn.client.api.impl.ContainerManagementProtocolProxy.ContainerManagementProtocolProxyData;
 import org.apache.hadoop.yarn.exceptions.YarnRuntimeException;
@@ -148,6 +150,18 @@ public class ContainerLauncherImpl extends AbstractService implements
         List<StartContainerRequest> list = new ArrayList<StartContainerRequest>();
         list.add(startRequest);
         StartContainersRequest requestList = StartContainersRequest.newInstance(list);
+
+        SplitDataInfo sdi = event.getSplitDataInfo();
+        if(sdi != null){
+          if(containerMgrAddress.split(":")[0].equals(sdi.getTargetName())
+                  && containerID.toString().equals(sdi.getContainerId())){
+            ContainerLaunchContext clc =
+                    requestList.getStartContainerRequests().get(0).getContainerLaunchContext();
+            clc.getEnvironment().put("DeployDecision", sdi.getInfoAppMasterToNode());
+            event.clearSplitDataInfo();
+          }
+        }
+
         StartContainersResponse response =
             proxy.getContainerManagementProtocol().startContainers(requestList);
         if (response.getFailedRequests() != null

@@ -21,6 +21,8 @@ package org.apache.hadoop.util;
 import java.io.*;
 import java.nio.ByteBuffer;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
@@ -55,7 +57,9 @@ public class LineReader implements Closeable {
   // The line delimiter
   private final byte[] recordDelimiterBytes;
 
-  protected String splitName = null;
+  protected long blockId;
+  protected FileOutputStream fos = null;
+  private static final Log LOG = LogFactory.getLog(LineReader.class);
 
   /**
    * Create a line reader that reads from the given stream using the
@@ -135,24 +139,48 @@ public class LineReader implements Closeable {
    * @throws IOException
    */
   public LineReader(InputStream in, Configuration conf,
-      byte[] recordDelimiterBytes, String splitName) throws IOException {
+      byte[] recordDelimiterBytes) throws IOException {
     this.in = in;
     this.bufferSize = conf.getInt("io.file.buffer.size", DEFAULT_BUFFER_SIZE);
     this.buffer = new byte[this.bufferSize];
     this.recordDelimiterBytes = recordDelimiterBytes;
+  }
 
-    this.splitName = splitName;
-    File file = new File("/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/blockCache");
+  public LineReader(InputStream in, Configuration conf,
+    byte[] recordDelimiterBytes,
+    String filePath, long start, long end) throws IOException {
+    this(in, conf, recordDelimiterBytes);
+
+    String changedPath = filePath.replaceAll("/", "-");
+    File fileLock = new File("/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/locks/" + changedPath);
     try {
-      if (!file.exists()) {
-        file.createNewFile();
-      } else this.splitName = null;
+      if (fileLock.exists()) {
+        FileReader reader = new FileReader(fileLock);
+        BufferedReader br = new BufferedReader(reader);
+        String str = br.readLine();
+        br.close();
+        reader.close();
+        if(str != null){
+          String[] splits = str.split(" ");
+          blockId = Long.parseLong(splits[2]);
+          long blockStart = Long.parseLong(splits[0]);
+          long blockEnd = Long.parseLong(splits[1]);
+          if(blockStart <= start && end <= blockEnd){
+            File blocksFolder = new File("/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/blockCache");
+            if(!blocksFolder.isDirectory()) blocksFolder.mkdirs();
+            File file = new File("/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/blockCache/" + blockId);
+            if(!file.exists()) {
+              file.createNewFile();
+              fos = new FileOutputStream(file, true);
+            }
+          }
+        }
+      }
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
   }
-
 
   /**
    * Close the underlying stream.
@@ -190,29 +218,23 @@ public class LineReader implements Closeable {
   protected int fillBuffer(InputStream in, byte[] buffer, boolean inDelimiter)
       throws IOException {
     int ret = in.read(buffer);
-    if(splitName != null){
-      File file = new File("/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/blockCache");
+    if(fos != null){
       byte[] bytes = null;
       int startPos = 0;
       if(bufferPosn >= ret) {
         if(ret > 0) bytes = new byte[ret];
+        else{
+          fos.flush();
+          fos.close();
+          fos = null;
+        }
       } else {
         bytes = new byte[ret - bufferPosn];
         startPos = bufferPosn;
       }
-      if(bytes == null) return ret;
-      for(int i = startPos; i < ret; ++i) bytes[i] = buffer[i];
-      try {
-        if (!file.exists()) {
-          file.createNewFile();
-        }
-        FileOutputStream fos = new FileOutputStream(file, true);
+      if(bytes != null) {
+        for(int i = startPos; i < ret; ++i) bytes[i] = buffer[i];
         fos.write(bytes);
-        fos.flush();
-        fos.close();
-      } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
       }
     }
     return ret;

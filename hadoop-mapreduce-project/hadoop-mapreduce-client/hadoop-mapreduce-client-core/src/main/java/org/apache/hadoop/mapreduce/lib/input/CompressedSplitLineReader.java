@@ -116,10 +116,16 @@ public class CompressedSplitLineReader extends SplitLineReader {
   private boolean finished = false;
 
   public CompressedSplitLineReader(SplitCompressionInputStream in,
-                                   Configuration conf,
-                                   byte[] recordDelimiterBytes, String splitName)
-                                       throws IOException {
-    super(in, conf, recordDelimiterBytes, splitName);
+    Configuration conf, byte[] recordDelimiterBytes,
+    String filePath, long start, long end) throws IOException {
+    super(in, conf, recordDelimiterBytes, filePath, start, end);
+    scin = in;
+    usingCRLF = (recordDelimiterBytes == null);
+  }
+
+  public CompressedSplitLineReader(SplitCompressionInputStream in,
+    Configuration conf, byte[] recordDelimiterBytes) throws IOException {
+    super(in, conf, recordDelimiterBytes);
     scin = in;
     usingCRLF = (recordDelimiterBytes == null);
   }
