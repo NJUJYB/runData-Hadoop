@@ -32,13 +32,7 @@ import org.apache.hadoop.net.Node;
 import org.apache.hadoop.security.authorize.PolicyProvider;
 import org.apache.hadoop.service.AbstractService;
 import org.apache.hadoop.util.VersionUtil;
-import org.apache.hadoop.yarn.api.records.ApplicationAttemptId;
-import org.apache.hadoop.yarn.api.records.ApplicationId;
-import org.apache.hadoop.yarn.api.records.Container;
-import org.apache.hadoop.yarn.api.records.ContainerState;
-import org.apache.hadoop.yarn.api.records.ContainerStatus;
-import org.apache.hadoop.yarn.api.records.NodeId;
-import org.apache.hadoop.yarn.api.records.Resource;
+import org.apache.hadoop.yarn.api.records.*;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.exceptions.YarnException;
 import org.apache.hadoop.yarn.exceptions.YarnRuntimeException;
@@ -99,6 +93,8 @@ public class ResourceTrackerService extends AbstractService implements
   
   private int minAllocMb;
   private int minAllocVcores;
+
+  private String rmHostName = null;
 
   static {
     resync.setNodeAction(NodeAction.RESYNC);
@@ -431,6 +427,25 @@ public class ResourceTrackerService extends AbstractService implements
         new RMNodeStatusEvent(nodeId, remoteNodeStatus.getNodeHealthStatus(),
             remoteNodeStatus.getContainersStatuses(), 
             remoteNodeStatus.getKeepAliveApplications(), nodeHeartBeatResponse));
+
+    if(rmHostName == null) {
+      rmHostName = rmContext.getYarnConfiguration().get(YarnConfiguration.RM_ADDRESS).split(":")[0];
+    }
+    if(rmHostName != null){
+      SplitDataInfo sdiSelf = this.rmContext.getAnalysisService().getNeededDeployBlocksForNode(rmHostName);
+      if(sdiSelf != null){
+        ((RMContextImpl)this.rmContext).getBlockMetaService().handle(sdiSelf.getInfoRMToRMNode());
+        this.rmContext.getAnalysisService().clearBlocksForNode(rmHostName);
+      }
+    }
+    SplitDataInfo sdi = this.rmContext.getAnalysisService().getNeededDeployBlocksForNode(nodeId.getHost());
+    if(sdi != null){
+      if(nodeHeartBeatResponse.getDiagnosticsMessage() != null)
+        nodeHeartBeatResponse.setDiagnosticsMessage(
+              nodeHeartBeatResponse.getDiagnosticsMessage() + sdi.getInfoRMToNode());
+      else nodeHeartBeatResponse.setDiagnosticsMessage(sdi.getInfoRMToNode());
+      this.rmContext.getAnalysisService().clearBlocksForNode(nodeId.getHost());
+    }
 
     return nodeHeartBeatResponse;
   }

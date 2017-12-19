@@ -30,6 +30,7 @@ import org.apache.hadoop.ha.HAServiceProtocol.HAServiceState;
 import org.apache.hadoop.yarn.LocalConfigurationProvider;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.NodeId;
+import org.apache.hadoop.yarn.api.records.TransferBlockMetaService;
 import org.apache.hadoop.yarn.conf.ConfigurationProvider;
 import org.apache.hadoop.yarn.event.Dispatcher;
 import org.apache.hadoop.yarn.server.resourcemanager.ahs.RMApplicationHistoryWriter;
@@ -74,6 +75,7 @@ public class RMContextImpl implements RMContext {
   private RMApplicationHistoryWriter rmApplicationHistoryWriter;
   private SystemMetricsPublisher systemMetricsPublisher;
 
+  private TransferBlockMetaService blockMetaService;
   /**
    * Default constructor. To be used in conjunction with setter methods for
    * individual fields.
@@ -128,6 +130,11 @@ public class RMContextImpl implements RMContext {
       containerTokenSecretManager,
       nmTokenSecretManager,
       clientToAMTokenSecretManager, null);
+  }
+
+  public TransferBlockMetaService getBlockMetaService() { return this.blockMetaService; }
+  public void setTransferBlockMetaService(TransferBlockMetaService blockMetaService){
+    this.blockMetaService = blockMetaService;
   }
 
   @Override

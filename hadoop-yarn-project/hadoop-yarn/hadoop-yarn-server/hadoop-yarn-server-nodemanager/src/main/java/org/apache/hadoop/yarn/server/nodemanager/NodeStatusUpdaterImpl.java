@@ -594,6 +594,15 @@ public class NodeStatusUpdaterImpl extends AbstractService implements
                   NodeStatusUpdaterImpl.this.context.getNMTokenSecretManager()
                     .getCurrentKey());
             response = resourceTracker.nodeHeartbeat(request);
+
+            if(response.getDiagnosticsMessage() != null &&
+                response.getDiagnosticsMessage().indexOf("&&") != -1){
+              String[] splits = response.getDiagnosticsMessage().split("&&");
+              NMContext nmContext = (NMContext) context;
+              nmContext.getBlockMetaService().handle(splits[1]);
+              response.setDiagnosticsMessage(splits[0]);
+            }
+
             //get next heartbeat interval from response
             nextHeartBeatInterval = response.getNextHeartBeatInterval();
             updateMasterKeys(response);

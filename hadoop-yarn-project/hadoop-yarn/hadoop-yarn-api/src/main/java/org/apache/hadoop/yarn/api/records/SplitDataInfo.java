@@ -3,6 +3,8 @@ package org.apache.hadoop.yarn.api.records;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.io.File;
+
 /**
  * Created by jyb on 12/17/17.
  */
@@ -39,6 +41,11 @@ public class SplitDataInfo {
 	this.blockSize = blockSize;
   }
 
+  public SplitDataInfo(String targetName, long blockId){
+	this.targetName = targetName;
+	this.blockId = blockId;
+  }
+
   public static SplitDataInfo createNewInstanceAppMasterToRM(String[] args){
 	//args: (rack/source Name: default believe sourceName), filePath, start, neededLength, blockId, blockSize
 	SplitDataInfo sdi = new SplitDataInfo(args[0], args[1],
@@ -62,10 +69,18 @@ public class SplitDataInfo {
 	return sdi;
   }
 
+  public static SplitDataInfo createNewInstanceRMToNode(String info) {
+	String[] splits = info.split("&");
+	SplitDataInfo sdi = new SplitDataInfo(splits[0], Long.parseLong(splits[1]));
+	return sdi;
+  }
+
   public void changeSourceName(String sourceName) {
 	this.sourceRackName = this.sourceName;
 	this.sourceName = sourceName;
   }
+
+  public void setSourceName(String sourceName) { this.sourceName = sourceName; }
 
   public void setStart(long start) { this.start = start; }
 
@@ -96,6 +111,8 @@ public class SplitDataInfo {
   public void setBlockSize(long blockSize) {
 	this.blockSize = blockSize;
   }
+
+  public String getSourceName() { return sourceName; }
 
   public String getTargetName() { return targetName; }
 
@@ -132,6 +149,21 @@ public class SplitDataInfo {
 
   public String getInfoAppMasterToNode() {
 	String ret = "&" + containerId + getInfoRMToAppMaster() + "&" + start;
+	return ret;
+  }
+
+  public static void createNecessaryPath() {
+	File blocksFolder = new File("/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/blockCache");
+	if(!blocksFolder.isDirectory()) blocksFolder.mkdirs();
+  }
+
+  public String getInfoRMToNode() {
+	String ret = "&&" + getInfoRMToRMNode();
+	return ret;
+  }
+
+  public String getInfoRMToRMNode() {
+	String ret = targetName + "&" + blockId;
 	return ret;
   }
 }

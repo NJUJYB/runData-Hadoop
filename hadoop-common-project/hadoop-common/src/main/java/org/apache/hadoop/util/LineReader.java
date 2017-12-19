@@ -57,9 +57,10 @@ public class LineReader implements Closeable {
   // The line delimiter
   private final byte[] recordDelimiterBytes;
 
-  protected long blockId;
+  protected long blockId = 0L;
   protected FileOutputStream fos = null;
   private static final Log LOG = LogFactory.getLog(LineReader.class);
+  private String targetFilePath = "/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/blockCache/blk_";
 
   /**
    * Create a line reader that reads from the given stream using the
@@ -166,15 +167,15 @@ public class LineReader implements Closeable {
           long blockStart = Long.parseLong(splits[0]);
           long blockEnd = Long.parseLong(splits[1]);
           if(blockStart <= start && end <= blockEnd){
-            File blocksFolder = new File("/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/blockCache");
-            if(!blocksFolder.isDirectory()) blocksFolder.mkdirs();
-            File file = new File("/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/blockCache/" + blockId);
+            File file = new File(targetFilePath + blockId);
             if(!file.exists()) {
               file.createNewFile();
               fos = new FileOutputStream(file, true);
             }
           }
         }
+        ExtraBlockOps ops = new ExtraBlockOps();
+        ops.deleteFileLock(fileLock.getPath());
       }
     } catch (IOException e) {
       // TODO Auto-generated catch block
@@ -227,6 +228,8 @@ public class LineReader implements Closeable {
           fos.flush();
           fos.close();
           fos = null;
+          ExtraBlockOps ops = new ExtraBlockOps();
+          ops.moveBlockToHDFSPath(targetFilePath + blockId, blockId);
         }
       } else {
         bytes = new byte[ret - bufferPosn];

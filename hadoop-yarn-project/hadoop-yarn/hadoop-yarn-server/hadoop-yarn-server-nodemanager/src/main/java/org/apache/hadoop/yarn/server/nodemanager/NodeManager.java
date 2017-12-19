@@ -43,10 +43,7 @@ import org.apache.hadoop.util.ShutdownHookManager;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.yarn.YarnUncaughtExceptionHandler;
 import org.apache.hadoop.yarn.api.ContainerManagementProtocol;
-import org.apache.hadoop.yarn.api.records.ApplicationId;
-import org.apache.hadoop.yarn.api.records.ContainerId;
-import org.apache.hadoop.yarn.api.records.NodeId;
-import org.apache.hadoop.yarn.api.records.SplitDataInfo;
+import org.apache.hadoop.yarn.api.records.*;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.event.AsyncDispatcher;
 import org.apache.hadoop.yarn.event.Dispatcher;
@@ -92,6 +89,8 @@ public class NodeManager extends CompositeService
   private boolean rmWorkPreservingRestartEnabled;
   private boolean shouldExitOnShutdownEvent = false;
 
+  private TransferBlockMetaService blockMetaService;
+
   public NodeManager() {
     super(NodeManager.class.getName());
   }
@@ -129,7 +128,7 @@ public class NodeManager extends CompositeService
       NMTokenSecretManagerInNM nmTokenSecretManager,
       NMStateStoreService stateStore) {
     return new NMContext(containerTokenSecretManager, nmTokenSecretManager,
-        dirsHandler, aclsManager, stateStore);
+        dirsHandler, aclsManager, stateStore, blockMetaService);
   }
 
   protected void doSecureLogin() throws IOException {
@@ -223,6 +222,9 @@ public class NodeManager extends CompositeService
     addService(nodeHealthChecker);
     dirsHandler = nodeHealthChecker.getDiskHandler();
 
+    blockMetaService = new TransferBlockMetaService();
+    addService(blockMetaService);
+
     this.context = createNMContext(containerTokenSecretManager,
         nmTokenSecretManager, nmStore);
     
@@ -252,7 +254,7 @@ public class NodeManager extends CompositeService
     // StatusUpdater should be added last so that it get started last 
     // so that we make sure everything is up before registering with RM. 
     addService(nodeStatusUpdater);
-    
+
     super.serviceInit(conf);
     // TODO add local dirs to del
   }
@@ -261,6 +263,7 @@ public class NodeManager extends CompositeService
   protected void serviceStart() throws Exception {
     try {
       doSecureLogin();
+      SplitDataInfo.createNecessaryPath();
     } catch (IOException e) {
       throw new YarnRuntimeException("Failed NodeManager login", e);
     }
@@ -351,6 +354,17 @@ public class NodeManager extends CompositeService
     private final NMStateStoreService stateStore;
     private boolean isDecommissioned = false;
 
+    private TransferBlockMetaService blockMetaService;
+
+    public NMContext(NMContainerTokenSecretManager containerTokenSecretManager,
+       NMTokenSecretManagerInNM nmTokenSecretManager,
+       LocalDirsHandlerService dirsHandler, ApplicationACLsManager aclsManager,
+       NMStateStoreService stateStore, TransferBlockMetaService blockMetaService) {
+      this(containerTokenSecretManager, nmTokenSecretManager,
+              dirsHandler, aclsManager, stateStore);
+      this.blockMetaService = blockMetaService;
+    }
+
     public NMContext(NMContainerTokenSecretManager containerTokenSecretManager,
         NMTokenSecretManagerInNM nmTokenSecretManager,
         LocalDirsHandlerService dirsHandler, ApplicationACLsManager aclsManager,
@@ -364,6 +378,8 @@ public class NodeManager extends CompositeService
       this.nodeHealthStatus.setLastHealthReportTime(System.currentTimeMillis());
       this.stateStore = stateStore;
     }
+
+    public TransferBlockMetaService getBlockMetaService() { return blockMetaService; }
 
     /**
      * Usable only after ContainerManager is started.

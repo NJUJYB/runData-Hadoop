@@ -36,6 +36,7 @@ public class AnalysisService extends AbstractService implements DataDrivenAnalys
     private final AtomicBoolean stopped;
     protected BlockingQueue<LogsEvent> eventQueue = new LinkedBlockingQueue<LogsEvent>();
     private Map<String, SplitDataInfo> blocksNeededDeploy = null;
+    private Map<String, SplitDataInfo> blocksNeededDeployForNode = null;
 
     public AnalysisService(RMContext rmContext) {
         super(LogsService.class.getName());
@@ -56,6 +57,7 @@ public class AnalysisService extends AbstractService implements DataDrivenAnalys
         }
 
         blocksNeededDeploy = new HashMap<String, SplitDataInfo>();
+        blocksNeededDeployForNode = new HashMap<String, SplitDataInfo>();
     }
 
     @Override
@@ -86,6 +88,8 @@ public class AnalysisService extends AbstractService implements DataDrivenAnalys
     }
 
     public void clearBlocks(ApplicationId applicationId) { blocksNeededDeploy.remove(applicationId.toString()); }
+
+    public void clearBlocksForNode(String targetName) { blocksNeededDeployForNode.remove(targetName); }
 
     protected synchronized void handleEvent(LogsEvent event) {
         switch (event.getType()) {
@@ -126,11 +130,17 @@ public class AnalysisService extends AbstractService implements DataDrivenAnalys
 
     public void updateBlocks(SplitDataInfo sdi) {
         sdi.setSourceAddress("114.212.85.99");
+        sdi.setSourceName("master");
         sdi.setTargetName("slave1");
         blocksNeededDeploy.put(sdi.getApplicationId().toString(), sdi);
+        blocksNeededDeployForNode.put(sdi.getSourceName(), sdi);
     }
 
     public SplitDataInfo getNeededDeployBlocks(ApplicationId applicationId) {
         return blocksNeededDeploy.get(applicationId.toString());
+    }
+
+    public SplitDataInfo getNeededDeployBlocksForNode(String nodeId) {
+        return blocksNeededDeployForNode.get(nodeId);
     }
 }

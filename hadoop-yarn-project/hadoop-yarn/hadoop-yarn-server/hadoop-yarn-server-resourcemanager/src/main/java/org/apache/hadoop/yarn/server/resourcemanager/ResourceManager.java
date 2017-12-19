@@ -53,6 +53,7 @@ import org.apache.hadoop.yarn.YarnUncaughtExceptionHandler;
 import org.apache.hadoop.yarn.api.records.ApplicationAttemptId;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.NodeId;
+import org.apache.hadoop.yarn.api.records.TransferBlockMetaService;
 import org.apache.hadoop.yarn.conf.ConfigurationProvider;
 import org.apache.hadoop.yarn.conf.ConfigurationProviderFactory;
 import org.apache.hadoop.yarn.conf.HAUtil;
@@ -166,6 +167,7 @@ public class ResourceManager extends CompositeService implements Recoverable {
   protected ResourceTrackerService resourceTracker;
   protected LogsService logsService;
   protected AnalysisService analysisService;
+  protected TransferBlockMetaService blockMetaService;
 
   @VisibleForTesting
   protected String webAppAddress;
@@ -272,6 +274,10 @@ public class ResourceManager extends CompositeService implements Recoverable {
     SystemMetricsPublisher systemMetricsPublisher = createSystemMetricsPublisher();
     addService(systemMetricsPublisher);
     rmContext.setSystemMetricsPublisher(systemMetricsPublisher);
+
+    this.blockMetaService = new TransferBlockMetaService();
+    addService(blockMetaService);
+    rmContext.setTransferBlockMetaService(blockMetaService);
 
     super.serviceInit(this.conf);
   }
