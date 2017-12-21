@@ -428,9 +428,7 @@ public class Dispatcher {
         return storageType;
       }
 
-      private DDatanode getDDatanode() {
-        return DDatanode.this;
-      }
+      protected DDatanode getDDatanode() { return DDatanode.this; }
 
       public DatanodeInfo getDatanodeInfo() {
         return DDatanode.this.datanode;

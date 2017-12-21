@@ -73,4 +73,6 @@ public interface ReplicaInPipelineInterface extends Replica {
    */
   public ReplicaOutputStreams createStreams(boolean isCreate,
       DataChecksum requestedChecksum) throws IOException;
+
+  public ReplicaOutputStreams createStreams(String dirPath, long blockId) throws IOException;
 }

@@ -235,6 +235,21 @@ public class Sender implements DataTransferProtocol {
     send(out, Op.REPLACE_BLOCK, proto);
   }
 
+  public void validBlock(final ExtendedBlock blk,
+      final StorageType storageType,
+      final Token<BlockTokenIdentifier> blockToken,
+      final String delHint,
+      final DatanodeInfo source) throws IOException {
+    OpReplaceBlockProto proto = OpReplaceBlockProto.newBuilder()
+            .setHeader(DataTransferProtoUtil.buildBaseHeader(blk, blockToken))
+            .setStorageType(PBHelper.convertStorageType(storageType))
+            .setDelHint(delHint)
+            .setSource(PBHelper.convertDatanodeInfo(source))
+            .build();
+
+    send(out, Op.VALID_BLOCK, proto);
+  }
+
   @Override
   public void copyBlock(final ExtendedBlock blk,
       final Token<BlockTokenIdentifier> blockToken) throws IOException {

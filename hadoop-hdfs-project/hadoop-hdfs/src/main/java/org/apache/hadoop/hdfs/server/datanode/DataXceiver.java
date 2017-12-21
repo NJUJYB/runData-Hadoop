@@ -27,17 +27,7 @@ import static org.apache.hadoop.hdfs.protocol.proto.DataTransferProtos.ShortCirc
 import static org.apache.hadoop.hdfs.server.datanode.DataNode.DN_CLIENTTRACE_FORMAT;
 import static org.apache.hadoop.util.Time.now;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.EOFException;
-import java.io.FileDescriptor;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InterruptedIOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
@@ -75,6 +65,7 @@ import org.apache.hadoop.hdfs.server.datanode.DataNode.ShortCircuitFdsUnsupporte
 import org.apache.hadoop.hdfs.server.datanode.DataNode.ShortCircuitFdsVersionException;
 import org.apache.hadoop.hdfs.server.datanode.ShortCircuitRegistry.NewShmInfo;
 import org.apache.hadoop.hdfs.server.datanode.fsdataset.LengthInputStream;
+import org.apache.hadoop.hdfs.server.datanode.fsdataset.impl.FsVolumeImpl;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeRegistration;
 import org.apache.hadoop.hdfs.shortcircuit.ShortCircuitShm.SlotId;
 import org.apache.hadoop.io.IOUtils;
@@ -1133,6 +1124,44 @@ class DataXceiver extends Receiver implements Runnable {
 
     //update metrics
     datanode.metrics.addReplaceBlockOp(elapsed());
+  }
+
+  @Override
+  public void validBlock(ExtendedBlock blk, StorageType storageType,
+    Token<BlockTokenIdentifier> blockToken, String delHint,
+    DatanodeInfo source) throws IOException {
+    super.validBlock(blk, storageType, blockToken, delHint, source);
+
+    File file = new File("/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/locks/" + blk.getBlockId());
+    try {
+      BufferedReader br = new BufferedReader(new FileReader(file));
+      String strOri = br.readLine();
+      String strDir = br.readLine();
+      br.close();
+
+      //Create File and Meta
+      ReplicaInPipelineInterface relicaInfo = datanode.data.createByExistFile(
+              storageType, blk, strDir);
+      relicaInfo.createStreams(strDir, blk.getBlockId());
+      String cmd = "mv " + strOri + " " + strDir;
+      Process process = Runtime.getRuntime().exec(cmd);
+      LineNumberReader input = new LineNumberReader(
+              new InputStreamReader(process.getInputStream()));
+      String lineStr;
+      process.waitFor();
+      while((lineStr = input.readLine()) != null){ LOG.info(lineStr); }
+
+      relicaInfo.setNumBytes(blk.getNumBytes());
+      blk.setNumBytes(blk.getNumBytes());
+      datanode.data.finalizeBlock(blk);
+      datanode.metrics.incrBlocksWritten();
+      datanode.notifyNamenodeReceivedBlock(blk, delHint, relicaInfo.getStorageUuid());
+      //sendResponse(SUCCESS, "");
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   private long elapsed() {

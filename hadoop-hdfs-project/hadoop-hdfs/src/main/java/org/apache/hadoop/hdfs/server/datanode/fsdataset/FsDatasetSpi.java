@@ -200,6 +200,8 @@ public interface FsDatasetSpi<V extends FsVolumeSpi> extends FSDatasetMBean {
   public ReplicaInPipelineInterface createTemporary(StorageType storageType,
       ExtendedBlock b) throws IOException;
 
+  public ReplicaInPipelineInterface createByExistFile(StorageType storageType,
+         ExtendedBlock b, String dirPath);
   /**
    * Creates a RBW replica and returns the meta info of the replica
    * 

@@ -313,6 +313,11 @@ public class SimulatedFSDataset implements FsDatasetSpi<FsVolumeSpi> {
     public boolean isOnTransientStorage() {
       return false;
     }
+
+    @Override
+    public ReplicaOutputStreams createStreams(String dirPath, long blockId) throws IOException {
+      return null;
+    }
   }
   
   /**
@@ -1263,6 +1268,11 @@ public class SimulatedFSDataset implements FsDatasetSpi<FsVolumeSpi> {
   @Override
   public void onFailLazyPersist(String bpId, long blockId) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public ReplicaInPipelineInterface createByExistFile(StorageType storageType, ExtendedBlock b, String dirPath) {
+    return null;
   }
 }
 

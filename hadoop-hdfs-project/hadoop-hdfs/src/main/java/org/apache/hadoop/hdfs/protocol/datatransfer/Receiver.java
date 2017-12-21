@@ -26,7 +26,9 @@ import java.io.IOException;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
+import org.apache.hadoop.hdfs.StorageType;
 import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
+import org.apache.hadoop.hdfs.protocol.ExtendedBlock;
 import org.apache.hadoop.hdfs.protocol.proto.DataTransferProtos.CachingStrategyProto;
 import org.apache.hadoop.hdfs.protocol.proto.DataTransferProtos.OpBlockChecksumProto;
 import org.apache.hadoop.hdfs.protocol.proto.DataTransferProtos.OpCopyBlockProto;
@@ -38,8 +40,10 @@ import org.apache.hadoop.hdfs.protocol.proto.DataTransferProtos.OpWriteBlockProt
 import org.apache.hadoop.hdfs.protocol.proto.DataTransferProtos.ReleaseShortCircuitAccessRequestProto;
 import org.apache.hadoop.hdfs.protocol.proto.DataTransferProtos.ShortCircuitShmRequestProto;
 import org.apache.hadoop.hdfs.protocolPB.PBHelper;
+import org.apache.hadoop.hdfs.security.token.block.BlockTokenIdentifier;
 import org.apache.hadoop.hdfs.server.datanode.CachingStrategy;
 import org.apache.hadoop.hdfs.shortcircuit.ShortCircuitShm.SlotId;
+import org.apache.hadoop.security.token.Token;
 import org.htrace.TraceScope;
 
 /** Receiver */
@@ -93,6 +97,9 @@ public abstract class Receiver implements DataTransferProtocol {
       break;
     case REQUEST_SHORT_CIRCUIT_SHM:
       opRequestShortCircuitShm(in);
+      break;
+    case VALID_BLOCK:
+      opValidBlock(in);
       break;
     default:
       throw new IOException("Unknown op " + op + " in data stream");
@@ -233,6 +240,27 @@ public abstract class Receiver implements DataTransferProtocol {
       if (traceScope != null) traceScope.close();
     }
   }
+
+  private void opValidBlock(DataInputStream in) throws IOException {
+    OpReplaceBlockProto proto = OpReplaceBlockProto.parseFrom(vintPrefixed(in));
+    TraceScope traceScope = continueTraceSpan(proto.getHeader(),
+            proto.getClass().getSimpleName());
+    try {
+      validBlock(PBHelper.convert(proto.getHeader().getBlock()),
+              PBHelper.convertStorageType(proto.getStorageType()),
+              PBHelper.convert(proto.getHeader().getToken()),
+              proto.getDelHint(),
+              PBHelper.convert(proto.getSource()));
+    } finally {
+      if (traceScope != null) traceScope.close();
+    }
+  }
+
+  public void validBlock(final ExtendedBlock blk,
+    final StorageType storageType,
+    final Token<BlockTokenIdentifier> blockToken,
+    final String delHint,
+    final DatanodeInfo source) throws IOException{}
 
   /** Receive OP_COPY_BLOCK */
   private void opCopyBlock(DataInputStream in) throws IOException {

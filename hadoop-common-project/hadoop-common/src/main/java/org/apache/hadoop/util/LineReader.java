@@ -19,7 +19,6 @@
 package org.apache.hadoop.util;
 
 import java.io.*;
-import java.nio.ByteBuffer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -57,10 +56,12 @@ public class LineReader implements Closeable {
   // The line delimiter
   private final byte[] recordDelimiterBytes;
 
-  protected long blockId = 0L;
+  protected long blockId = 0L, bytes = 0L;
   protected FileOutputStream fos = null;
+  protected File fileLock = null;
   private static final Log LOG = LogFactory.getLog(LineReader.class);
-  private String targetFilePath = "/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/blockCache/blk_";
+  protected String targetFilePath = "/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/blockCache/blk_";
+  protected String sourceAddress, targetAddress;
 
   /**
    * Create a line reader that reads from the given stream using the
@@ -153,7 +154,7 @@ public class LineReader implements Closeable {
     this(in, conf, recordDelimiterBytes);
 
     String changedPath = filePath.replaceAll("/", "-");
-    File fileLock = new File("/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/locks/" + changedPath);
+    fileLock = new File("/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/locks/" + changedPath);
     try {
       if (fileLock.exists()) {
         FileReader reader = new FileReader(fileLock);
@@ -164,9 +165,12 @@ public class LineReader implements Closeable {
         if(str != null){
           String[] splits = str.split(" ");
           blockId = Long.parseLong(splits[2]);
+          sourceAddress = splits[3];
+          targetAddress = splits[4];
           long blockStart = Long.parseLong(splits[0]);
           long blockEnd = Long.parseLong(splits[1]);
           if(blockStart <= start && end <= blockEnd){
+            bytes = blockEnd - blockStart;
             File file = new File(targetFilePath + blockId);
             if(!file.exists()) {
               file.createNewFile();
@@ -174,8 +178,6 @@ public class LineReader implements Closeable {
             }
           }
         }
-        ExtraBlockOps ops = new ExtraBlockOps();
-        ops.deleteFileLock(fileLock.getPath());
       }
     } catch (IOException e) {
       // TODO Auto-generated catch block
@@ -228,8 +230,6 @@ public class LineReader implements Closeable {
           fos.flush();
           fos.close();
           fos = null;
-          ExtraBlockOps ops = new ExtraBlockOps();
-          ops.moveBlockToHDFSPath(targetFilePath + blockId, blockId);
         }
       } else {
         bytes = new byte[ret - bufferPosn];

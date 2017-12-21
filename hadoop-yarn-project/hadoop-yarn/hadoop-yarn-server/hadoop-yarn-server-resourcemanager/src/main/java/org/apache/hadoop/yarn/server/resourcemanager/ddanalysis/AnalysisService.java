@@ -131,6 +131,7 @@ public class AnalysisService extends AbstractService implements DataDrivenAnalys
     public void updateBlocks(SplitDataInfo sdi) {
         sdi.setSourceAddress("114.212.85.99");
         sdi.setSourceName("master");
+        sdi.setTargetAddress("114.212.85.203");
         sdi.setTargetName("slave1");
         blocksNeededDeploy.put(sdi.getApplicationId().toString(), sdi);
         blocksNeededDeployForNode.put(sdi.getSourceName(), sdi);

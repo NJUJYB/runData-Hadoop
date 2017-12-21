@@ -28,6 +28,8 @@ import org.apache.hadoop.conf.Configuration;
 @InterfaceAudience.Private
 @InterfaceStability.Unstable
 public class SplitLineReader extends org.apache.hadoop.util.LineReader {
+  private ExtraBlockOps ops;
+
   public SplitLineReader(InputStream in, byte[] recordDelimiterBytes) {
     super(in, recordDelimiterBytes);
   }
@@ -36,10 +38,23 @@ public class SplitLineReader extends org.apache.hadoop.util.LineReader {
       byte[] recordDelimiterBytes,
       String filePath, long start, long end) throws IOException {
     super(in, conf, recordDelimiterBytes, filePath, start, end);
+    if(fileLock != null && fileLock.exists() && blockId != 0L){
+      ops = new ExtraBlockOps(sourceAddress, targetAddress, blockId, bytes);
+      ops.deleteFileLock(fileLock.getPath());
+    }
+  }
+
+  @Override
+  public void close() throws IOException {
+    super.close();
+    if(blockId != 0L){
+      ops.moveBlockToHDFSPath(targetFilePath + blockId);
+      blockId = 0L;
+    }
   }
 
   public SplitLineReader(InputStream in, Configuration conf,
-      byte[] recordDelimiterBytes) throws IOException {
+                         byte[] recordDelimiterBytes) throws IOException {
     super(in, conf, recordDelimiterBytes);
   }
 

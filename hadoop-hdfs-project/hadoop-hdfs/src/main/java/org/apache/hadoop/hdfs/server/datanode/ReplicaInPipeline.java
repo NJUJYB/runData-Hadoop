@@ -202,7 +202,15 @@ public class ReplicaInPipeline extends ReplicaInfo
   public int hashCode() {
     return super.hashCode();
   }
-  
+
+  @Override // ReplicaInPipelineInterface
+  public ReplicaOutputStreams createStreams(String dirPath, long blockId) throws IOException {
+    File blockFile = getBlockFile();
+    File metaFile = getMetaFile();
+    DataNode.LOG.info(blockFile.getName() + " " + metaFile.getName());
+    return null;
+  }
+
   @Override // ReplicaInPipelineInterface
   public ReplicaOutputStreams createStreams(boolean isCreate, 
       DataChecksum requestedChecksum) throws IOException {

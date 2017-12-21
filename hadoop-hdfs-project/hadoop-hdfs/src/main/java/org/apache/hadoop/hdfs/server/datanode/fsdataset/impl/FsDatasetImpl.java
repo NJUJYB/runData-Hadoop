@@ -1179,6 +1179,24 @@ class FsDatasetImpl implements FsDatasetSpi<FsVolumeImpl> {
     return rbw;
   }
 
+  @Override
+  public ReplicaInPipeline createByExistFile(StorageType storageType, ExtendedBlock b,
+    String dirPath){
+    synchronized (this){
+      try {
+        FsVolumeImpl v = volumes.getNextVolume(storageType, b.getNumBytes());
+        File f = new File(dirPath + "blk_" + b.getBlockId());
+        ReplicaInPipeline newReplicaInfo = new ReplicaInPipeline(b.getBlockId(),
+                b.getGenerationStamp(), v, f.getParentFile(), 0);
+        volumeMap.add(b.getBlockPoolId(), newReplicaInfo);
+        return newReplicaInfo;
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+    return null;
+  }
+
   @Override // FsDatasetSpi
   public ReplicaInPipeline createTemporary(
       StorageType storageType, ExtendedBlock b) throws IOException {

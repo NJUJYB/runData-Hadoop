@@ -32,10 +32,11 @@ public class SplitDataInfo {
 	this.blockSize = blockSize;
   }
 
-  public SplitDataInfo(String filePath, String sourceAddress, String targetName,
-					   long blockId, long blockSize){
+  public SplitDataInfo(String filePath, String sourceAddress, String targetAddress,
+					   String targetName, long blockId, long blockSize){
 	this.filePath = filePath;
 	this.sourceAddress = sourceAddress;
+	this.targetAddress = targetAddress;
 	this.targetName = targetName;
 	this.blockId = blockId;
 	this.blockSize = blockSize;
@@ -54,18 +55,18 @@ public class SplitDataInfo {
   }
 
   public static SplitDataInfo createNewInstanceRMToAppMaster(String[] args){
-	//args: (used), filePath, sourceAddress, targetName, blockId, blockSize
-	SplitDataInfo sdi = new SplitDataInfo(args[1], args[2], args[3],
-			Long.parseLong(args[4]), Long.parseLong(args[5]));
+	//args: (used), filePath, sourceAddress, targetAddress, targetName, blockId, blockSize
+	SplitDataInfo sdi = new SplitDataInfo(args[1], args[2], args[3], args[4],
+			Long.parseLong(args[5]), Long.parseLong(args[6]));
 	return sdi;
   }
 
   public static SplitDataInfo createNewInstanceAppMasterToNode(String[] args){
-	//args: (unused), containerId, filePath, sourceAddress, targetName, blockId, blockSize
-	SplitDataInfo sdi = new SplitDataInfo(args[2], args[3], args[4],
-			Long.parseLong(args[5]), Long.parseLong(args[6]));
+	//args: (unused), containerId, filePath, sourceAddress, targetAddress, targetName, blockId, blockSize, start
+	SplitDataInfo sdi = new SplitDataInfo(args[2], args[3], args[4], args[5],
+			Long.parseLong(args[6]), Long.parseLong(args[7]));
 	sdi.containerId = args[1];
-	sdi.start = Long.parseLong(args[7]);
+	sdi.start = Long.parseLong(args[8]);
 	return sdi;
   }
 
@@ -79,6 +80,8 @@ public class SplitDataInfo {
 	this.sourceRackName = this.sourceName;
 	this.sourceName = sourceName;
   }
+
+  public void setTargetAddress(String targetAddress) { this.targetAddress = targetAddress; }
 
   public void setSourceName(String sourceName) { this.sourceName = sourceName; }
 
@@ -112,6 +115,10 @@ public class SplitDataInfo {
 	this.blockSize = blockSize;
   }
 
+  public String getTargetAddress() { return targetAddress; }
+
+  public String getSourceAddress() { return sourceAddress; }
+
   public String getSourceName() { return sourceName; }
 
   public String getTargetName() { return targetName; }
@@ -143,7 +150,8 @@ public class SplitDataInfo {
   }
 
   public String getInfoRMToAppMaster() {
-	String ret = "&" + filePath + "&" + sourceAddress + "&" + targetName + "&" + blockId + "&" + blockSize;
+	String ret = "&" + filePath + "&" + sourceAddress + "&" + targetAddress +
+			"&" + targetName + "&" + blockId + "&" + blockSize;
 	return ret;
   }
 

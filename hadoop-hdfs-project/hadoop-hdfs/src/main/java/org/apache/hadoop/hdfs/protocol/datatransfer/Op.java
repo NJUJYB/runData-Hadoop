@@ -37,7 +37,8 @@ public enum Op {
   TRANSFER_BLOCK((byte)86),
   REQUEST_SHORT_CIRCUIT_FDS((byte)87),
   RELEASE_SHORT_CIRCUIT_FDS((byte)88),
-  REQUEST_SHORT_CIRCUIT_SHM((byte)89);
+  REQUEST_SHORT_CIRCUIT_SHM((byte)89),
+  VALID_BLOCK((byte)90);
 
   /** The code for this operation. */
   public final byte code;

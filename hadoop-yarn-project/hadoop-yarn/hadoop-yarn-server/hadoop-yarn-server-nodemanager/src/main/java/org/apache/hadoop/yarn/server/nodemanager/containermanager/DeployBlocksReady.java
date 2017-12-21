@@ -22,7 +22,8 @@ public class DeployBlocksReady {
 
 	  FileWriter writer = new FileWriter(file, true);
 	  long end = sdi.getStart() + sdi.getBlockSize();
-	  writer.write(sdi.getStart() + " " + end + " " + sdi.getBlockId() + "\r\n");
+	  writer.write(sdi.getStart() + " " + end + " " + sdi.getBlockId()
+			  + " " + sdi.getSourceAddress() + " " + sdi.getTargetAddress() + "\r\n");
 	  writer.close();
 	}catch (IOException e) {
 	  // TODO Auto-generated catch block
