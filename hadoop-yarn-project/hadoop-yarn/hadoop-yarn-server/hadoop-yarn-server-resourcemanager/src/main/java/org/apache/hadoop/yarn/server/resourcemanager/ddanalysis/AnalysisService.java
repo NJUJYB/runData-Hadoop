@@ -6,6 +6,7 @@ import org.apache.hadoop.service.AbstractService;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.SplitDataInfo;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.server.resourcemanager.RMContext;
 import org.apache.hadoop.yarn.server.resourcemanager.ddanalysis.event.AnalysisRequestEvent;
 import org.apache.hadoop.yarn.server.resourcemanager.ddanalysis.event.LogsEvent;
@@ -27,121 +28,137 @@ import org.apache.hadoop.hdfs.server.balancer.BlockDeploy.BlockDeployCli;
  * Created by jyb on 12/7/17.
  */
 public class AnalysisService extends AbstractService implements DataDrivenAnalysisService {
-    private final RMContext rmContext;
-    private static final Log LOG = LogFactory.getLog(AnalysisService.class);
-    private File file = new File("/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/models.txt");
-    private String port = ":50010";
+  private final RMContext rmContext;
+  private static final Log LOG = LogFactory.getLog(AnalysisService.class);
+  private int mode;
 
-    private Thread eventHandlingThread;
-    private final AtomicBoolean stopped;
-    protected BlockingQueue<LogsEvent> eventQueue = new LinkedBlockingQueue<LogsEvent>();
-    private Map<String, SplitDataInfo> blocksNeededDeploy = null;
-    private Map<String, SplitDataInfo> blocksNeededDeployForNode = null;
+  private File file = new File("/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/models.txt");
+  private String port = ":50010";
 
-    public AnalysisService(RMContext rmContext) {
-        super(LogsService.class.getName());
-        this.rmContext = rmContext;
-        this.stopped = new AtomicBoolean(false);
+  private Thread eventHandlingThread;
+  private final AtomicBoolean stopped;
+  protected BlockingQueue<LogsEvent> eventQueue = new LinkedBlockingQueue<LogsEvent>();
+  private Map<String, SplitDataInfo> blocksNeededDeploy = null;
+  private Map<String, SplitDataInfo> blocksNeededDeployForNode = null;
 
-        FileWriter writer;
-        try {
-            if (!file.exists()) {
-                file.createNewFile();
-            }
-            writer = new FileWriter(file, true);
-            writer.write("\\input jin.txt.segmented slave1\r\n");
-            writer.close();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+  public AnalysisService(RMContext rmContext) {
+	super(LogsService.class.getName());
+	this.rmContext = rmContext;
+	this.stopped = new AtomicBoolean(false);
+	mode = rmContext.getYarnConfiguration().getInt(
+			YarnConfiguration.RM_ANALYSIS_DATA_DEPLOY_MODE,
+			YarnConfiguration.ANALYSIS_DEPLOY_WHEN_COMPUTATION);
 
-        blocksNeededDeploy = new HashMap<String, SplitDataInfo>();
-        blocksNeededDeployForNode = new HashMap<String, SplitDataInfo>();
-    }
+	FileWriter writer;
+	try {
+	  if (!file.exists()) {
+		file.createNewFile();
+	  }
+	  writer = new FileWriter(file, true);
+	  writer.write("\\input jin.txt.segmented slave1\r\n");
+	  writer.close();
+	} catch (IOException e) {
+	  // TODO Auto-generated catch block
+	  e.printStackTrace();
+	}
 
-    @Override
-    protected void serviceStart() throws Exception {
-        this.eventHandlingThread = new Thread() {
-            @SuppressWarnings("unchecked")
-            @Override
-            public void run() {
-                LogsEvent event;
-                while (!stopped.get() && !Thread.currentThread().isInterrupted()) {
-                    try {
-                        event = AnalysisService.this.eventQueue.take();
-                    } catch (InterruptedException e) {
-                        if (!stopped.get()) {
-                            LOG.error("Returning, interrupted : " + e);
-                        } return;
-                    }
-                    try {
-                        handleEvent(event);
-                    } catch (Throwable t) {
-                        return;
-                    }
-                }
-            }
-        };
-        this.eventHandlingThread.start();
-        super.serviceStart();
-    }
+	blocksNeededDeploy = new HashMap<String, SplitDataInfo>();
+	blocksNeededDeployForNode = new HashMap<String, SplitDataInfo>();
+  }
 
-    public void clearBlocks(ApplicationId applicationId) { blocksNeededDeploy.remove(applicationId.toString()); }
+  @Override
+  protected void serviceStart() throws Exception {
+	this.eventHandlingThread = new Thread() {
+	  @SuppressWarnings("unchecked")
+	  @Override
+	  public void run() {
+		LogsEvent event;
+		while (!stopped.get() && !Thread.currentThread().isInterrupted()) {
+		  try {
+			event = AnalysisService.this.eventQueue.take();
+		  } catch (InterruptedException e) {
+			if (!stopped.get()) {
+			  LOG.error("Returning, interrupted : " + e);
+			} return;
+		  }
+		  try {
+			handleEvent(event);
+		  } catch (Throwable t) {
+			return;
+		  }
+		}
+	  }
+	};
+	this.eventHandlingThread.start();
+	super.serviceStart();
+  }
 
-    public void clearBlocksForNode(String targetName) { blocksNeededDeployForNode.remove(targetName); }
+  public void clearBlocks(ApplicationId applicationId) { blocksNeededDeploy.remove(applicationId.toString()); }
 
-    protected synchronized void handleEvent(LogsEvent event) {
-        switch (event.getType()) {
-            case ANALYSIS_REQUEST: {
-                String[] args = new String[4];
-                AnalysisRequestEvent analysisEvent = (AnalysisRequestEvent) event;
-                String applicationId = analysisEvent.getAppId();
-                ArrayList<String> logs = rmContext.getLogsService().getLogs();
-                for(String str: logs){
-                    if(str.indexOf(applicationId) != -1){
-                        if(str.indexOf("hdfs") != -1){
-                            String[] splits = str.split(" ");
-                            args[3] = splits[splits.length - 1].split(";")[0];
-                        }
-                    }
-                }
+  public void clearBlocksForNode(String targetName) { blocksNeededDeployForNode.remove(targetName); }
 
-                args[0] = "hdfs://master:9000/input/jin1.txt.segmented";
-                args[1] = "114.212.85.99" + port;
-                args[2] = "114.212.85.203" + port;
-                try {
-                    Tool tool = new BlockDeployCli();
-                    tool.setConf(new HdfsConfiguration());
-                    int r = tool.run(args);
-                } catch (Exception e) {
-                }
-            }
-        }
-    }
+  protected synchronized void handleEvent(LogsEvent event) {
+	switch (event.getType()) {
+	  case ANALYSIS_REQUEST: {
+		String[] args = new String[4];
+		AnalysisRequestEvent analysisEvent = (AnalysisRequestEvent) event;
+		String applicationId = analysisEvent.getAppId();
+		ArrayList<String> logs = rmContext.getLogsService().getLogs();
+		for(String str: logs){
+		  if(str.indexOf(applicationId) != -1){
+			if(str.indexOf("hdfs") != -1){
+			  String[] splits = str.split(" ");
+			  args[0] = splits[splits.length - 2];
+			  args[1] = splits[splits.length - 1].split(";")[0];
+			}
+		  }
+		}
 
-    @Override
-    public void handle(LogsEvent event) {
-        try {
-            eventQueue.put(event);
-        } catch (InterruptedException e) {
-        }
-    }
+		args[2] = "114.212.85.99" + port;
+		args[3] = "114.212.85.203" + port;
+		try {
+		  Tool tool = new BlockDeployCli();
+		  tool.setConf(new HdfsConfiguration());
+		  int r = tool.run(args);
+		} catch (Exception e) {
+		}
+	  }
+	}
+  }
 
-    public void updateBlocks(SplitDataInfo sdi) {
-        sdi.setSourceAddress("114.212.85.99");
-        sdi.setSourceName("master");
-        sdi.setTargetAddress("114.212.85.203");
-        sdi.setTargetName("slave1");
-        blocksNeededDeploy.put(sdi.getApplicationId().toString(), sdi);
-        blocksNeededDeployForNode.put(sdi.getSourceName(), sdi);
-    }
+  @Override
+  public void handle(LogsEvent event) {
+	try {
+	  if(mode == YarnConfiguration.ANALYSIS_DEPLOY_WHEN_SPARE ||
+			  mode == YarnConfiguration.ANALYSIS_DEPLOY_AUTO){
+		eventQueue.put(event);
+	  }
+	} catch (InterruptedException e) {
+	}
+  }
 
-    public SplitDataInfo getNeededDeployBlocks(ApplicationId applicationId) {
-        return blocksNeededDeploy.get(applicationId.toString());
-    }
+  public void updateBlocks(SplitDataInfo sdi) {
+	if(mode == YarnConfiguration.ANALYSIS_DEPLOY_WHEN_COMPUTATION ||
+			mode == YarnConfiguration.ANALYSIS_DEPLOY_AUTO){
+	  sdi.setSourceAddress("114.212.85.99");
+	  sdi.setSourceName("master");
+	  sdi.setTargetAddress("114.212.85.203");
+	  sdi.setTargetName("slave1");
+	  blocksNeededDeploy.put(sdi.getApplicationId().toString(), sdi);
+	  blocksNeededDeployForNode.put(sdi.getSourceName(), sdi);
+	}
+  }
 
-    public SplitDataInfo getNeededDeployBlocksForNode(String nodeId) {
+  public int getMode() { return mode; }
+
+  public SplitDataInfo getNeededDeployBlocks(ApplicationId applicationId) {
+	if(mode == YarnConfiguration.ANALYSIS_DEPLOY_WHEN_COMPUTATION ||
+			mode == YarnConfiguration.ANALYSIS_DEPLOY_AUTO)
+		return blocksNeededDeploy.get(applicationId.toString());
+	else return null;
+  }
+
+  public SplitDataInfo getNeededDeployBlocksForNode(String nodeId) {
         return blocksNeededDeployForNode.get(nodeId);
     }
 }

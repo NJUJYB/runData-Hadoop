@@ -49,4 +49,8 @@
 		<name>yarn.resourcemanager.analysisEnable</name>
 		<value>true</value>
 	</property>
+	<property>
+		<name>yarn.resourcemanager.dataDeployMode</name>
+		<value>0</value>
+	</property>
 </configuration>

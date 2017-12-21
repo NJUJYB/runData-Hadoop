@@ -428,23 +428,26 @@ public class ResourceTrackerService extends AbstractService implements
             remoteNodeStatus.getContainersStatuses(), 
             remoteNodeStatus.getKeepAliveApplications(), nodeHeartBeatResponse));
 
-    if(rmHostName == null) {
-      rmHostName = rmContext.getYarnConfiguration().get(YarnConfiguration.RM_ADDRESS).split(":")[0];
-    }
-    if(rmHostName != null){
-      SplitDataInfo sdiSelf = this.rmContext.getAnalysisService().getNeededDeployBlocksForNode(rmHostName);
-      if(sdiSelf != null){
-        ((RMContextImpl)this.rmContext).getBlockMetaService().handle(sdiSelf.getInfoRMToRMNode());
-        this.rmContext.getAnalysisService().clearBlocksForNode(rmHostName);
+    if(this.rmContext.getAnalysisService() != null &&
+      this.rmContext.getAnalysisService().getMode() != YarnConfiguration.ANALYSIS_DEPLOY_WHEN_SPARE){
+      if(rmHostName == null) {
+        rmHostName = rmContext.getYarnConfiguration().get(YarnConfiguration.RM_ADDRESS).split(":")[0];
       }
-    }
-    SplitDataInfo sdi = this.rmContext.getAnalysisService().getNeededDeployBlocksForNode(nodeId.getHost());
-    if(sdi != null){
-      if(nodeHeartBeatResponse.getDiagnosticsMessage() != null)
-        nodeHeartBeatResponse.setDiagnosticsMessage(
-              nodeHeartBeatResponse.getDiagnosticsMessage() + sdi.getInfoRMToNode());
-      else nodeHeartBeatResponse.setDiagnosticsMessage(sdi.getInfoRMToNode());
-      this.rmContext.getAnalysisService().clearBlocksForNode(nodeId.getHost());
+      if(rmHostName != null){
+        SplitDataInfo sdiSelf = this.rmContext.getAnalysisService().getNeededDeployBlocksForNode(rmHostName);
+        if(sdiSelf != null){
+          ((RMContextImpl)this.rmContext).getBlockMetaService().handle(sdiSelf.getInfoRMToRMNode());
+          this.rmContext.getAnalysisService().clearBlocksForNode(rmHostName);
+        }
+      }
+      SplitDataInfo sdi = this.rmContext.getAnalysisService().getNeededDeployBlocksForNode(nodeId.getHost());
+      if(sdi != null){
+        if(nodeHeartBeatResponse.getDiagnosticsMessage() != null)
+          nodeHeartBeatResponse.setDiagnosticsMessage(
+                  nodeHeartBeatResponse.getDiagnosticsMessage() + sdi.getInfoRMToNode());
+        else nodeHeartBeatResponse.setDiagnosticsMessage(sdi.getInfoRMToNode());
+        this.rmContext.getAnalysisService().clearBlocksForNode(nodeId.getHost());
+      }
     }
 
     return nodeHeartBeatResponse;

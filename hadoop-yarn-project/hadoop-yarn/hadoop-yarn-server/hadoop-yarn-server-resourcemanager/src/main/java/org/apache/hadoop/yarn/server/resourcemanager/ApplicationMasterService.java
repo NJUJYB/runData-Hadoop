@@ -420,7 +420,8 @@ public class ApplicationMasterService extends AbstractService implements
           SplitDataInfo sdi = splitPathMap.get(Long.parseLong(splits[4]));
           if(splits[0].indexOf("/") == -1) {
             sdi.changeSourceName(splits[0]);
-            this.rmContext.getAnalysisService().updateBlocks(sdi);
+            if(this.rmContext.getAnalysisService() != null)
+              this.rmContext.getAnalysisService().updateBlocks(sdi);
           } else sdi.setSourceRackName(splits[0]);
         }
         req.setResourceName(splits[0]);
@@ -626,7 +627,9 @@ public class ApplicationMasterService extends AbstractService implements
       lock.setAllocateResponse(allocateResponse);
 
       //Future multiple sdis
-      SplitDataInfo sdi = rmContext.getAnalysisService().getNeededDeployBlocks(applicationId);
+      SplitDataInfo sdi = null;
+      if(rmContext.getAnalysisService() != null)
+        sdi = rmContext.getAnalysisService().getNeededDeployBlocks(applicationId);
       if(sdi != null){
         boolean isAdded = false;
         for(Container c : allocateResponse.getAllocatedContainers()){

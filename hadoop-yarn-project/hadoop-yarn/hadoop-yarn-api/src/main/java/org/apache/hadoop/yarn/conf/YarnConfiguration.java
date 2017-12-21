@@ -126,6 +126,10 @@ public class YarnConfiguration extends Configuration {
 
   public static final String RM_ANALYSIS_ENABLE = RM_PREFIX + "analysisEnable";
   public static final boolean DEFAULT_RM_ANALYSIS_ENABLE = true;
+  public static final String RM_ANALYSIS_DATA_DEPLOY_MODE = RM_PREFIX + "dataDeployMode";
+  public static final int ANALYSIS_DEPLOY_WHEN_COMPUTATION = 0;
+  public static final int ANALYSIS_DEPLOY_WHEN_SPARE = 1;
+  public static final int ANALYSIS_DEPLOY_AUTO = 2;
 
   public static final String RM_CLUSTER_ID = RM_PREFIX + "cluster-id";
 

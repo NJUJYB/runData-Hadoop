@@ -28,7 +28,6 @@ public class ExtraBlockOps {
   }
 
   public void moveBlockToHDFSPath(String filePath){
-	LOG.info("xhz-try0");
 	String path = searchForBlock("/home/jyb/Desktop/hadoop/hadoop-2.6.2/hdfs/data/current");
 
 	File file = new File("/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/locks/" + blockId);

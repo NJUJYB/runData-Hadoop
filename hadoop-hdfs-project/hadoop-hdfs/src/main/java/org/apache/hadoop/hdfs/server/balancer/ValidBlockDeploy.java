@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.DFSClient;
 import org.apache.hadoop.hdfs.DFSUtil;
 import org.apache.hadoop.hdfs.StorageType;
 import org.apache.hadoop.hdfs.protocol.datatransfer.Sender;
@@ -25,6 +26,7 @@ import org.apache.hadoop.security.token.Token;
 import java.io.*;
 import java.net.Socket;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -125,7 +127,20 @@ public class ValidBlockDeploy{
 			IOUtils.closeStream(out);
 			IOUtils.closeSocket(sock);
 			for(NameNodeConnector ncc : connectors) IOUtils.cleanup(LOG, ncc);
-			//Delete balancer.id TODO
+
+			//Delete balancer dir TODO
+			try {
+			  Thread.sleep(500);
+			  DFSClient dfsClient = new DFSClient(new URI("hdfs://114.212.85.99:9000"), conf);
+			  boolean isOk = dfsClient.delete("/system", true);
+			  dfsClient.close();
+			} catch (IOException e) {
+			  e.printStackTrace();
+			} catch (URISyntaxException e) {
+			  e.printStackTrace();
+			} catch (InterruptedException e) {
+			  e.printStackTrace();
+			}
 		  }
 		  exit = true;
 		}

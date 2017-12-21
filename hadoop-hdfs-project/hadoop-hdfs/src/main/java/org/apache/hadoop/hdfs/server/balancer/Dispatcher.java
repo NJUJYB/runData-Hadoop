@@ -120,7 +120,7 @@ public class Dispatcher {
   /** The maximum number of concurrent blocks moves at a datanode */
   private final int maxConcurrentMovesPerNode;
 
-  protected String blockPath = null;
+  protected long blockId = 0L;
   protected long bytes = 0L;
 
   private static class GlobalBlockMap {
@@ -957,8 +957,8 @@ public class Dispatcher {
    */
   private boolean isGoodBlockCandidate(StorageGroup source, StorageGroup target,
       StorageType targetStorageType, DBlock block) {
-    if(blockPath != null) {
-      if(block.getNumBytes() == bytes) return true;
+    if(blockId != 0L) {
+      if(block.getBlock().getBlockId() == blockId) return true;
       else return false;
     }
 
