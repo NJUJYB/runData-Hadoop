@@ -43,13 +43,10 @@ public class ExtraBlockOps {
 	  }
 	}
 
-	//String cmd = "mv " + filePath + " ";
 	if(path != null) {
 	  ValidBlockDeploy vbd = new ValidBlockDeploy(blockId,
 			  path.split("blk_" + blockId + "_")[0], sourceAddress, targetAddress, bytes);
 	  vbd.valid();
-	  //cmd = cmd + path.split("blk_" + blockId + "_")[0];
-	  //exeCommand(cmd);
 	}
   }
 

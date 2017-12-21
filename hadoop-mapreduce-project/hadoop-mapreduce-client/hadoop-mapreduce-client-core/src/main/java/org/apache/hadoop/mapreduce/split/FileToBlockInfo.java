@@ -44,4 +44,18 @@ public class FileToBlockInfo {
   public long getBlockId() { return blockId; }
 
   public long getBlockSize() { return blockSize; }
+
+  public static void cleanUp() {
+	//Delete balancer dir TODO
+	final Configuration conf = new Configuration();
+	try {
+	  DFSClient dfsClient = new DFSClient(new URI("hdfs://114.212.85.99:9000"), conf);
+	  boolean isOk = dfsClient.delete("/system", true);
+	  dfsClient.close();
+	} catch (IOException e) {
+	  e.printStackTrace();
+	} catch (URISyntaxException e) {
+	  e.printStackTrace();
+	}
+  }
 }
