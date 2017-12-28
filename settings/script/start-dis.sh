@@ -19,7 +19,8 @@ cd ~/Desktop/hadoop/hadoop-2.6.2/
 ./sbin/start-all.sh
 ./sbin/hadoop-daemon.sh start datanode
 bin/hdfs dfs -mkdir /input
-bin/hdfs dfs -put ~/Desktop/jin1.txt.segmented /input
+bin/hdfs dfs -put ~/Desktop/jin.txt.segmented /input
+#bin/hdfs dfs -put ~/Desktop/jin1.txt.segmented /input
 sleep 3
 echo HDFS-SETTING-DONE
 #bin/hdfs dfs -put ~/Desktop/jin2.txt.segmented /input

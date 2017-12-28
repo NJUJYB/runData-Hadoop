@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentMap;
 
 import org.apache.commons.logging.Log;
@@ -31,6 +32,7 @@ import org.apache.hadoop.ipc.Server;
 import org.apache.hadoop.net.Node;
 import org.apache.hadoop.security.authorize.PolicyProvider;
 import org.apache.hadoop.service.AbstractService;
+import org.apache.hadoop.util.ExpLogs;
 import org.apache.hadoop.util.VersionUtil;
 import org.apache.hadoop.yarn.api.records.*;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -95,6 +97,7 @@ public class ResourceTrackerService extends AbstractService implements
   private int minAllocVcores;
 
   private String rmHostName = null;
+  private ArrayList<String> expLogsAppend = null;//ExpLogs
 
   static {
     resync.setNodeAction(NodeAction.RESYNC);
@@ -185,6 +188,7 @@ public class ResourceTrackerService extends AbstractService implements
   @Override
   protected void serviceStop() throws Exception {
     if (this.server != null) {
+      if(expLogsAppend != null) ExpLogs.writeExpLogs("RM&Node: ", expLogsAppend);
       this.server.stop();
     }
     super.serviceStop();
@@ -428,6 +432,7 @@ public class ResourceTrackerService extends AbstractService implements
             remoteNodeStatus.getContainersStatuses(), 
             remoteNodeStatus.getKeepAliveApplications(), nodeHeartBeatResponse));
 
+    double ratio = 0;
     if(this.rmContext.getAnalysisService() != null &&
       this.rmContext.getAnalysisService().getMode() != YarnConfiguration.ANALYSIS_DEPLOY_WHEN_SPARE){
       if(rmHostName == null) {
@@ -436,6 +441,7 @@ public class ResourceTrackerService extends AbstractService implements
       if(rmHostName != null){
         SplitDataInfo sdiSelf = this.rmContext.getAnalysisService().getNeededDeployBlocksForNode(rmHostName);
         if(sdiSelf != null){
+          ratio = 1.0;//sdiSelf.getInfoRMToRMNode().length()
           ((RMContextImpl)this.rmContext).getBlockMetaService().handle(sdiSelf.getInfoRMToRMNode());
           this.rmContext.getAnalysisService().clearBlocksForNode(rmHostName);
         }
@@ -446,11 +452,21 @@ public class ResourceTrackerService extends AbstractService implements
           nodeHeartBeatResponse.setDiagnosticsMessage(
                   nodeHeartBeatResponse.getDiagnosticsMessage() + sdi.getInfoRMToNode());
         else nodeHeartBeatResponse.setDiagnosticsMessage(sdi.getInfoRMToNode());
+        if(nodeHeartBeatResponse.getDiagnosticsMessage().length() != 0)
+          ratio = (double)sdi.getInfoRMToNode().length()
+                  / (double)nodeHeartBeatResponse.getDiagnosticsMessage().length();
         this.rmContext.getAnalysisService().clearBlocksForNode(nodeId.getHost());
       }
     }
+    addExpLogs(ratio);
 
     return nodeHeartBeatResponse;
+  }
+
+  private void addExpLogs(double ratio){
+    if(expLogsAppend != null){
+      expLogsAppend.add("" + ratio);
+    }
   }
 
   private void populateKeys(NodeHeartbeatRequest request,

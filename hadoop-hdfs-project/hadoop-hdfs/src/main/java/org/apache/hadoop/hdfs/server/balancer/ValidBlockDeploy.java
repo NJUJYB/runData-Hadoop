@@ -20,10 +20,12 @@ import org.apache.hadoop.hdfs.server.protocol.DatanodeStorageReport;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.security.token.Token;
+import org.apache.hadoop.util.ExpLogs;
 
 import java.io.*;
 import java.net.Socket;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -56,6 +58,10 @@ public class ValidBlockDeploy{
 	  @Override
 	  public void run() {
 		while (!exit) {
+		  //ArrayList<String> validLogs = new ArrayList<String>();
+		  //ArrayList<Long> validTimes = new ArrayList<Long>();
+		  //validLogs.add("Start connect to Namenode"); validTimes.add(System.currentTimeMillis());
+
 		  //Connect to Namenode
 		  final Configuration conf = new Configuration();
 		  final Collection<URI> namenodes = DFSUtil.getNsServiceRpcUris(conf);
@@ -115,6 +121,9 @@ public class ValidBlockDeploy{
 			  new Sender(out).validBlock(eb, g.storageType, accessToken,
 					  s.getDatanodeInfo().getDatanodeUuid(), g.getDDatanode().datanode);
 			  nnc.getBytesMoved().addAndGet(block.getNumBytes());
+
+			  //validLogs.add("End valid"); validTimes.add(System.currentTimeMillis());
+			  //ExpLogs.writeExpLogs("ValidBlock", validLogs, validTimes);
 			}
 		  } catch (IOException e) {
 			e.printStackTrace();

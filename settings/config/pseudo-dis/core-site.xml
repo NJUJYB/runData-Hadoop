@@ -27,6 +27,6 @@
 	</property>
 	<property>
 		<name>io.file.buffer.size</name>
-		<value>131702</value>
+		<value>131072</value>
 	</property>
 </configuration>

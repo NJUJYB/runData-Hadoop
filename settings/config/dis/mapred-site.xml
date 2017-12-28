@@ -30,4 +30,8 @@
 		<name>mapreduce.jobhistory.web.address</name>
 		<value>master:19888</value>
 	</property>
+	<property>
+		<name>mapreduce.map.java.opts</name>
+		<value>-Xmx1024m</value>
+	</property>
 </configuration>

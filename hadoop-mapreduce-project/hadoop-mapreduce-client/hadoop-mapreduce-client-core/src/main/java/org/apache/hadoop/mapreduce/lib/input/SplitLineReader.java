@@ -18,12 +18,16 @@
 
 package org.apache.hadoop.mapreduce.lib.input;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.util.ExpLogs;
 
 @InterfaceAudience.Private
 @InterfaceStability.Unstable
@@ -47,10 +51,41 @@ public class SplitLineReader extends org.apache.hadoop.util.LineReader {
   @Override
   public void close() throws IOException {
     super.close();
-    if(blockId != 0L){
-      ops.moveBlockToHDFSPath(targetFilePath + blockId);
-      blockId = 0L;
-    }
+
+    Thread thread = new Thread(){
+      @SuppressWarnings("unchecked")
+      @Override
+      public void run() {
+        if(blockId != 0L){
+          //ArrayList<String> copyToDiskLogs = new ArrayList<String>();
+          //ArrayList<Long> copyToDiskTimes = new ArrayList<Long>();
+          //copyToDiskLogs.add("Start CopyToDist"); copyToDiskTimes.add(System.nanoTime());
+
+          String targetFilePath = "/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/blockCache/blk_" + blockId;
+          File file = new File(targetFilePath);
+          try{
+            if(!file.exists()) {
+              file.createNewFile();
+              FileOutputStream fos = new FileOutputStream(file, true);
+              fos.write(splitBuf);
+              fos.flush();
+              fos.close();
+              splitBuf = null;
+            }
+          } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+          }
+          //copyToDiskLogs.add("End CopyToDist"); copyToDiskTimes.add(System.nanoTime());
+          //ExpLogs.writeExpLogs("BufferCopyToDisk", copyToDiskLogs, copyToDiskTimes);
+
+          ops.moveBlockToHDFSPath(targetFilePath);
+          blockId = 0L;
+        }
+        if(expLogs != null) ExpLogs.writeExpLogs("FillBuffer", expLogs, times);
+      }
+    };
+    thread.start();
   }
 
   public SplitLineReader(InputStream in, Configuration conf,

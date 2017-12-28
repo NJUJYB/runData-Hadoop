@@ -19,6 +19,7 @@
 package org.apache.hadoop.util;
 
 import java.io.*;
+import java.util.ArrayList;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -57,11 +58,12 @@ public class LineReader implements Closeable {
   private final byte[] recordDelimiterBytes;
 
   protected long blockId = 0L, bytes = 0L;
-  protected FileOutputStream fos = null;
   protected File fileLock = null;
-  private static final Log LOG = LogFactory.getLog(LineReader.class);
-  protected String targetFilePath = "/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/blockCache/blk_";
   protected String sourceAddress, targetAddress;
+  protected ArrayList<String> expLogs = null;//null for non-logs
+  protected ArrayList<Long> times = new ArrayList<Long>(0);
+  protected byte[] splitBuf = null;
+  protected int splitBufPos = 0;
 
   /**
    * Create a line reader that reads from the given stream using the
@@ -157,6 +159,7 @@ public class LineReader implements Closeable {
     fileLock = new File("/home/jyb/Desktop/hadoop/hadoop-2.6.2/logs/locks/" + changedPath);
     try {
       if (fileLock.exists()) {
+        //recordLogs("StartInit");
         FileReader reader = new FileReader(fileLock);
         BufferedReader br = new BufferedReader(reader);
         String str = br.readLine();
@@ -171,13 +174,10 @@ public class LineReader implements Closeable {
           long blockEnd = Long.parseLong(splits[1]);
           if(blockStart <= start && end <= blockEnd){
             bytes = blockEnd - blockStart;
-            File file = new File(targetFilePath + blockId);
-            if(!file.exists()) {
-              file.createNewFile();
-              fos = new FileOutputStream(file, true);
-            }
+            splitBuf = new byte[(int)bytes];//128MB < 2^31
           }
         }
+        //recordLogs("EndInit");
       }
     } catch (IOException e) {
       // TODO Auto-generated catch block
@@ -218,28 +218,31 @@ public class LineReader implements Closeable {
     }
   }
 
+  private void recordLogs(String event){
+    if(expLogs != null){
+      long time = System.nanoTime();
+      expLogs.add(event);
+      times.add(time);
+    }
+  }
+
   protected int fillBuffer(InputStream in, byte[] buffer, boolean inDelimiter)
       throws IOException {
     int ret = in.read(buffer);
-    if(fos != null){
-      byte[] bytes = null;
-      int startPos = 0;
-      if(bufferPosn >= ret) {
-        if(ret > 0) bytes = new byte[ret];
-        else{
-          fos.flush();
-          fos.close();
-          fos = null;
-        }
-      } else {
-        bytes = new byte[ret - bufferPosn];
-        startPos = bufferPosn;
-      }
-      if(bytes != null) {
-        for(int i = startPos; i < ret; ++i) bytes[i] = buffer[i];
-        fos.write(bytes);
+
+    //Exp: fillBuffer frequency & bytes
+    //recordLogs("StartCopyRecord");
+    int length = 0;
+    if(splitBuf != null){
+      int startPos = (bufferPosn >= ret) ? 0 : bufferPosn;
+      length = (bufferPosn >= ret) ? ret : (ret - bufferPosn);
+      if(length > 0) {
+        for(int i = startPos; i < ret; ++i) splitBuf[splitBufPos + i] = buffer[i];
+        splitBufPos += length;
       }
     }
+    //recordLogs("Read" + length + "bytes");
+
     return ret;
   }
 

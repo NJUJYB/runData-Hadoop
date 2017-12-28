@@ -38,6 +38,7 @@ import org.apache.hadoop.security.authorize.PolicyProvider;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.service.AbstractService;
+import org.apache.hadoop.util.ExpLogs;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.yarn.api.ApplicationMasterProtocol;
 import org.apache.hadoop.yarn.api.protocolrecords.AllocateRequest;
@@ -94,6 +95,7 @@ public class ApplicationMasterService extends AbstractService implements
   private final ConcurrentMap<ApplicationAttemptId, AllocateResponseLock> responseMap =
       new ConcurrentHashMap<ApplicationAttemptId, AllocateResponseLock>();
   private final RMContext rmContext;
+  private ArrayList<String> expLogsAppend = null;//ExpLogs
 
   public ApplicationMasterService(RMContext rmContext, YarnScheduler scheduler) {
     super(ApplicationMasterService.class.getName());
@@ -396,6 +398,14 @@ public class ApplicationMasterService extends AbstractService implements
     return hasApplicationMasterRegistered;
   }
 
+  private void addExpLogs(double total, double append){
+    if(expLogsAppend != null){
+      double ratio = 0;
+      if(total > 0.02) ratio = append / total;
+      expLogsAppend.add("" + ratio);
+    }
+  }
+
   @Override
   public AllocateResponse allocate(AllocateRequest request)
       throws YarnException, IOException {
@@ -410,8 +420,10 @@ public class ApplicationMasterService extends AbstractService implements
 
     Map<Long, SplitDataInfo> splitPathMap = new HashMap<Long, SplitDataInfo>(0);
     for(ResourceRequest req : request.getAskList()) {
+      double appendLength = 0;
       if(req.getResourceName().indexOf("&") != -1) {
         String[] splits = req.getResourceName().split("&");
+        appendLength = req.getResourceName().length() - splits[0].length();
         if(splitPathMap.get(Long.parseLong(splits[4])) == null) {
           SplitDataInfo sdi = SplitDataInfo.createNewInstanceAppMasterToRM(splits);
           sdi.setApplicationId(applicationId);
@@ -426,6 +438,7 @@ public class ApplicationMasterService extends AbstractService implements
         }
         req.setResourceName(splits[0]);
       }
+      addExpLogs(req.getResourceName().length() + appendLength, appendLength);
     }
     String logsData_0 = "";
     for(Long blockId : splitPathMap.keySet()){
@@ -637,6 +650,7 @@ public class ApplicationMasterService extends AbstractService implements
           if(c.getPriority().getPriority() == 20){
             isAdded = true;
             c.setNodeHttpAddress(c.getNodeHttpAddress() + sdi.getInfoRMToAppMaster());
+            addExpLogs(c.getNodeHttpAddress().length(), sdi.getInfoRMToAppMaster().length());
           }
         }
         if(isAdded) rmContext.getAnalysisService().clearBlocks(applicationId);
@@ -724,6 +738,7 @@ public class ApplicationMasterService extends AbstractService implements
   @Override
   protected void serviceStop() throws Exception {
     if (this.server != null) {
+      if(expLogsAppend != null) ExpLogs.writeExpLogs("AM&RM: ", expLogsAppend);
       this.server.stop();
     }
     super.serviceStop();
